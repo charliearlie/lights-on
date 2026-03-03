@@ -6,9 +6,11 @@ interface DarkModeToggleProps {
 export function DarkModeToggle({ isDark, onToggle }: DarkModeToggleProps) {
   return (
     <button
+      role="switch"
+      aria-checked={isDark}
       onClick={onToggle}
       className="flex items-center gap-2.5"
-      aria-label={isDark ? "Turn lights off" : "Turn lights on"}
+      aria-label="Toggle lights"
     >
       <span className="text-[0.625rem] font-medium uppercase tracking-[0.1em] text-[#78716C] dark:text-[#A8A097]">
         Lights
