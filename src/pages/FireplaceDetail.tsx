@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { products, type Product } from "../data/products";
+import { fireplaces } from "../data/fireplaces";
+import { type Product } from "../data/products";
 import { Header } from "../components/Header";
 import { ProductCard } from "../components/ProductCard";
 
-interface ProductDetailProps {
+interface FireplaceDetailProps {
   id: number;
   isDark: boolean;
   onToggle: () => void;
@@ -20,9 +21,9 @@ function getRelated(product: Product, all: Product[]): Product[] {
   return [prev, next, third];
 }
 
-export function ProductDetail({ id, isDark, onToggle }: ProductDetailProps) {
+export function FireplaceDetail({ id, isDark, onToggle }: FireplaceDetailProps) {
   const [visible, setVisible] = useState(false);
-  const product = products.find((p) => p.id === id);
+  const product = fireplaces.find((p) => p.id === id);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -34,27 +35,27 @@ export function ProductDetail({ id, isDark, onToggle }: ProductDetailProps) {
   if (!product) {
     return (
       <div className="min-h-screen bg-surface-light transition-colors duration-300 dark:bg-surface-dark">
-        <Header isDark={isDark} onToggle={onToggle} currentSection="lamps" />
+        <Header isDark={isDark} onToggle={onToggle} currentSection="fireplaces" />
         <div className="mx-auto max-w-6xl px-4 py-24 text-center">
           <p className="font-display text-[2rem] italic text-[#1C1917] dark:text-[#F5F0E8]">
-            Lamp not found
+            Fireplace not found
           </p>
           <a
-            href="#"
+            href="#fireplaces"
             className="mt-6 inline-block text-[0.75rem] font-medium uppercase tracking-[0.15em] text-[#78716C] transition-colors duration-150 hover:text-[#1C1917] dark:text-[#A8A097] dark:hover:text-[#F5F0E8]"
           >
-            &larr; All lamps
+            &larr; All fireplaces
           </a>
         </div>
       </div>
     );
   }
 
-  const related = getRelated(product, products);
+  const related = getRelated(product, fireplaces);
 
   return (
     <div className="min-h-screen bg-surface-light transition-colors duration-300 dark:bg-surface-dark">
-      <Header isDark={isDark} onToggle={onToggle} currentSection="lamps" />
+      <Header isDark={isDark} onToggle={onToggle} currentSection="fireplaces" />
 
       <main
         style={{
@@ -68,7 +69,7 @@ export function ProductDetail({ id, isDark, onToggle }: ProductDetailProps) {
         {/* Back navigation */}
         <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 lg:px-8">
           <a
-            href="#"
+            href="#fireplaces"
             className="inline-flex items-center gap-1.5 text-[0.75rem] font-medium uppercase tracking-[0.15em] text-[#78716C] transition-colors duration-150 hover:text-[#1C1917] dark:text-[#A8A097] dark:hover:text-[#F5F0E8]"
           >
             <svg
@@ -84,7 +85,7 @@ export function ProductDetail({ id, isDark, onToggle }: ProductDetailProps) {
             >
               <path d="M9 2.5L4.5 7L9 11.5" />
             </svg>
-            All lamps
+            All fireplaces
           </a>
         </div>
 
@@ -111,7 +112,7 @@ export function ProductDetail({ id, isDark, onToggle }: ProductDetailProps) {
           {/* Product info */}
           <div className="w-full pt-8 lg:w-[48%] lg:pt-16">
             <p className="text-[0.625rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">
-              Nordic Lighting
+              Nordic Hearth
             </p>
 
             <h1 className="font-display mt-2 text-[2.5rem] italic leading-[1.05] tracking-tight text-[#1C1917] dark:text-[#F5F0E8] sm:text-[3.5rem] lg:text-[4rem]">
@@ -155,7 +156,7 @@ export function ProductDetail({ id, isDark, onToggle }: ProductDetailProps) {
               />
               <span className="text-[0.75rem] font-medium uppercase tracking-[0.12em] text-[#78716C] dark:text-[#A8A097]">
                 {isDark
-                  ? "Lit \u2014 warm glow active"
+                  ? "Burning \u2014 warm hearth active"
                   : "Unlit \u2014 toggle lights above"}
               </span>
             </div>
@@ -166,12 +167,12 @@ export function ProductDetail({ id, isDark, onToggle }: ProductDetailProps) {
         <div className="border-t border-border-light dark:border-border-dark">
           <div className="mx-auto max-w-6xl px-4 pb-14 pt-10 sm:px-6 lg:px-8">
             <p className="mb-5 text-[0.625rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">
-              More lamps
+              More hearths
             </p>
             <div className="flex gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 sm:gap-5 sm:overflow-visible sm:pb-0">
               {related.map((p, i) => (
                 <div key={p.id} className="min-w-[220px] sm:min-w-0">
-                  <ProductCard product={p} isDark={isDark} index={i} />
+                  <ProductCard product={p} isDark={isDark} index={i} linkPrefix="fireplace" />
                 </div>
               ))}
             </div>

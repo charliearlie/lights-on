@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { GoogleGenAI } from "@google/genai";
-import { products, type Product } from "../data/products";
+import { fireplaces } from "../data/fireplaces";
+import { type Product } from "../data/products";
 import { saveImage, loadImage } from "../data/imageStore";
 
 function getAI() {
@@ -15,12 +16,12 @@ function ai() {
   return _ai;
 }
 
-interface LampImages {
+interface FireplaceImages {
   off: string | null;
   on: string | null;
 }
 
-type ImageMap = Record<number, LampImages>;
+type ImageMap = Record<number, FireplaceImages>;
 
 function extractImageDataUri(
   response: Awaited<ReturnType<GoogleGenAI["models"]["generateContent"]>>,
@@ -63,18 +64,18 @@ function extractBase64(dataUri: string): { data: string; mimeType: string } {
   return { mimeType: match[1], data: match[2] };
 }
 
-async function generateLampPair(
+async function generateFireplacePair(
   product: Product,
   log?: (msg: string) => void,
 ): Promise<{ off: string | null; on: string | null }> {
-  // Step 1: Generate the lamp in its OFF state
+  // Step 1: Generate the fireplace in its OFF state (daytime, unlit)
   log?.(`Step 1: Requesting OFF image for "${product.name}"...`);
   const offResponse = await ai().models.generateContent({
     model: "gemini-3.1-flash-image-preview",
-    contents: `Product photography of a Scandinavian-design ${product.description}.
-The lamp is turned OFF. No light emission. The scene is lit by soft ambient daylight. The lamp appears as an inert decorative object.
-Clean white background with very subtle shadows.
-Style: IKEA catalog photography, minimal, modern, square format. No text or labels.`,
+    contents: `Interior photography of a Scandinavian-style room featuring a ${product.description}.
+The fireplace is UNLIT — no fire, no embers, no glow. The fireplace opening is dark and empty.
+The room is illuminated by natural daylight streaming through windows. Furniture, walls, and decor are clearly visible in warm natural light.
+Style: Architectural interior photography, warm Scandinavian aesthetic, photorealistic, square format. No text or labels.`,
     config: {
       responseModalities: ["IMAGE", "TEXT"],
     },
@@ -86,7 +87,7 @@ Style: IKEA catalog photography, minimal, modern, square format. No text or labe
     return { off: null, on: null };
   }
 
-  // Step 2: Send the OFF image back and ask for the ON version of the same lamp
+  // Step 2: Send the OFF image back and ask for the ON version with the fireplace lit at night
   log?.(`Step 2: Requesting ON image using OFF image as reference...`);
   const { data, mimeType } = extractBase64(offImage);
 
@@ -97,10 +98,10 @@ Style: IKEA catalog photography, minimal, modern, square format. No text or labe
         role: "user",
         parts: [
           {
-            text: `This is a product photo of a lamp that is turned OFF. Generate a new image of this EXACT SAME lamp, but now turned ON.
-Keep the lamp design, angle, position, and composition identical.
-Changes: The lamp should now emit a warm golden glow. The background should change to dark/black to make the lamp's light stand out dramatically. The surrounding area should be illuminated by the lamp's warm light. Cozy, inviting atmosphere.
-Style: IKEA catalog photography, minimal, modern, square format. No text or labels.`,
+            text: `This is an interior photo of a room with an unlit fireplace during the day. Generate a new image of this EXACT SAME room, but now at NIGHT with the fireplace LIT.
+Keep the room layout, furniture, fireplace design, and composition identical.
+Changes: The fireplace now has a roaring fire with visible flames and glowing embers. Windows show nighttime outside. The fire is the PRIMARY light source, casting warm amber light across walls, floor, and furniture. Deep dramatic shadows in corners. Warm flickering highlights on nearby surfaces. Cozy, intimate, hygge atmosphere.
+Style: Architectural interior photography, warm Scandinavian aesthetic, dramatic firelight, square format. No text or labels.`,
           },
           {
             inlineData: {
@@ -120,14 +121,14 @@ Style: IKEA catalog photography, minimal, modern, square format. No text or labe
   return { off: offImage, on: onImage };
 }
 
-function LampGeneratorCard({
+function FireplaceGeneratorCard({
   product,
   images,
   onGenerate,
   generating,
 }: {
   product: Product;
-  images: LampImages;
+  images: FireplaceImages;
   onGenerate: () => void;
   generating: boolean;
 }) {
@@ -211,12 +212,12 @@ function LampGeneratorCard({
   );
 }
 
-export function Generate() {
+export function GenerateFireplaces() {
   const [imageMap, setImageMap] = useState<ImageMap>(() => {
     const initial: ImageMap = {};
-    for (const product of products) {
-      const off = loadImage("lamp", product.id, "off");
-      const on = loadImage("lamp", product.id, "on");
+    for (const product of fireplaces) {
+      const off = loadImage("fireplace", product.id, "off");
+      const on = loadImage("fireplace", product.id, "on");
       if (off || on) {
         initial[product.id] = { off, on };
       }
@@ -235,7 +236,7 @@ export function Generate() {
     addLog(`Generating images for ${product.name}...`);
 
     try {
-      const result = await generateLampPair(product, (msg) =>
+      const result = await generateFireplacePair(product, (msg) =>
         addLog(`${product.name}: ${msg}`),
       );
 
@@ -247,8 +248,8 @@ export function Generate() {
 
       // Persist to localStorage (may fail if quota exceeded — images are ~1.7MB each)
       try {
-        if (result.off) saveImage("lamp", product.id, "off", result.off);
-        if (result.on) saveImage("lamp", product.id, "on", result.on);
+        if (result.off) saveImage("fireplace", product.id, "off", result.off);
+        if (result.on) saveImage("fireplace", product.id, "on", result.on);
       } catch {
         addLog(`${product.name}: Could not save to localStorage (quota exceeded) — use download buttons`);
       }
@@ -269,7 +270,7 @@ export function Generate() {
   };
 
   const generateAll = async () => {
-    for (const product of products) {
+    for (const product of fireplaces) {
       await generateForProduct(product);
     }
   };
@@ -280,13 +281,13 @@ export function Generate() {
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex items-center gap-3">
             <a
-              href="#"
+              href="#fireplaces"
               className="text-sm text-ikea-blue hover:underline dark:text-ikea-yellow"
             >
               &larr; Back to Store
             </a>
             <h1 className="text-xl font-black text-gray-900 dark:text-white">
-              Image Generator
+              Fireplace Image Generator
             </h1>
           </div>
           <button
@@ -303,8 +304,8 @@ export function Generate() {
 
       <main className="mx-auto max-w-7xl px-4 py-6">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {products.map((product) => (
-            <LampGeneratorCard
+          {fireplaces.map((product) => (
+            <FireplaceGeneratorCard
               key={product.id}
               product={product}
               images={imageMap[product.id] ?? { off: null, on: null }}

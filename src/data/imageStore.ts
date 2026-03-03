@@ -1,27 +1,31 @@
-const KEY_PREFIX = "lamp-image-";
-
-function key(productId: number, state: "off" | "on"): string {
-  return `${KEY_PREFIX}${productId}-${state}`;
+function key(
+  category: "lamp" | "fireplace",
+  productId: number,
+  state: "off" | "on",
+): string {
+  return `${category}-image-${productId}-${state}`;
 }
 
 export function saveImage(
+  category: "lamp" | "fireplace",
   productId: number,
   state: "off" | "on",
   dataUri: string,
 ): void {
-  localStorage.setItem(key(productId, state), dataUri);
+  localStorage.setItem(key(category, productId, state), dataUri);
 }
 
 export function loadImage(
+  category: "lamp" | "fireplace",
   productId: number,
   state: "off" | "on",
 ): string | null {
-  return localStorage.getItem(key(productId, state));
+  return localStorage.getItem(key(category, productId, state));
 }
 
-export function hasImages(productId: number): boolean {
+export function hasImages(category: "lamp" | "fireplace", productId: number): boolean {
   return !!(
-    localStorage.getItem(key(productId, "off")) &&
-    localStorage.getItem(key(productId, "on"))
+    localStorage.getItem(key(category, productId, "off")) &&
+    localStorage.getItem(key(category, productId, "on"))
   );
 }
