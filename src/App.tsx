@@ -80,7 +80,7 @@ function App() {
                     </p>
                   </div>
                   <p className="mt-3 text-center text-[0.6875rem] text-[#78716C]/60 dark:text-[#A8A097]/60">
-                    Product images generated with AI
+                    A showcase by Charlie Waite&ensp;&middot;&ensp;Not a real store&ensp;&middot;&ensp;Product images generated with AI
                   </p>
                 </div>
               </footer>
@@ -110,7 +110,7 @@ function App() {
                     </p>
                   </div>
                   <p className="mt-3 text-center text-[0.6875rem] text-[#78716C]/60 dark:text-[#A8A097]/60">
-                    Product images generated with AI
+                    A showcase by Charlie Waite&ensp;&middot;&ensp;Not a real store&ensp;&middot;&ensp;Product images generated with AI
                   </p>
                 </div>
               </footer>
