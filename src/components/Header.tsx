@@ -4,7 +4,7 @@ import { DarkModeToggle } from "./DarkModeToggle";
 interface HeaderProps {
   isDark: boolean;
   onToggle: () => void;
-  currentSection?: "lamps" | "fireplaces";
+  currentSection?: "lamps" | "fireplaces" | "outdoor";
 }
 
 export function Header({ isDark, onToggle, currentSection }: HeaderProps) {
@@ -60,6 +60,19 @@ export function Header({ isDark, onToggle, currentSection }: HeaderProps) {
             >
               Fireplaces
               {currentSection === "fireplaces" && (
+                <span className="absolute inset-x-0 bottom-0 h-0.5 bg-ikea-blue dark:bg-amber-glow" />
+              )}
+            </Link>
+            <Link
+              to="/outdoor"
+              className={`relative py-2.5 text-[0.6875rem] font-medium uppercase tracking-[0.15em] transition-colors duration-150 ${
+                currentSection === "outdoor"
+                  ? "text-ikea-blue dark:text-amber-glow"
+                  : "text-[#78716C] hover:text-[#1C1917] dark:text-[#A8A097] dark:hover:text-[#F5F0E8]"
+              }`}
+            >
+              Outdoor
+              {currentSection === "outdoor" && (
                 <span className="absolute inset-x-0 bottom-0 h-0.5 bg-ikea-blue dark:bg-amber-glow" />
               )}
             </Link>

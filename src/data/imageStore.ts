@@ -1,5 +1,5 @@
 function key(
-  category: "lamp" | "fireplace" | "hero",
+  category: "lamp" | "fireplace" | "hero" | "outdoor",
   productId: number,
   state: "off" | "on",
 ): string {
@@ -7,7 +7,7 @@ function key(
 }
 
 export function saveImage(
-  category: "lamp" | "fireplace" | "hero",
+  category: "lamp" | "fireplace" | "hero" | "outdoor",
   productId: number,
   state: "off" | "on",
   dataUri: string,
@@ -16,14 +16,14 @@ export function saveImage(
 }
 
 export function loadImage(
-  category: "lamp" | "fireplace" | "hero",
+  category: "lamp" | "fireplace" | "hero" | "outdoor",
   productId: number,
   state: "off" | "on",
 ): string | null {
   return localStorage.getItem(key(category, productId, state));
 }
 
-export function hasImages(category: "lamp" | "fireplace" | "hero", productId: number): boolean {
+export function hasImages(category: "lamp" | "fireplace" | "hero" | "outdoor", productId: number): boolean {
   return !!(
     localStorage.getItem(key(category, productId, "off")) &&
     localStorage.getItem(key(category, productId, "on"))

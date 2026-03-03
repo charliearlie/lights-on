@@ -32,10 +32,14 @@ Product images (off/on pairs) are generated using **Gemini 3.1** (`gemini-3.1-fl
 - `/generate/lamps` — Lamp image generation page
 - `/generate/fireplaces` — Fireplace image generation page
 - `/generate/hero` — Hero image generation page
+- `/outdoor` — Outdoor light product grid
+- `/outdoor/:id` — Outdoor light product detail
+- `/generate/outdoor` — Outdoor light image generation page
 
 ## Project Structure
 - `src/data/products.ts` — 16 hardcoded lamp products
 - `src/data/fireplaces.ts` — 16 hardcoded fireplace products
+- `src/data/outdoor.ts` — 16 hardcoded outdoor light products
 - `src/components/` — Header, DarkModeToggle, HeroToggle, ProductGrid, ProductCard, FireplaceGrid
 - `src/pages/Home.tsx` — Home landing page
 - `src/pages/ProductDetail.tsx` — Lamp detail page (uses `useParams()` for ID)
@@ -43,6 +47,9 @@ Product images (off/on pairs) are generated using **Gemini 3.1** (`gemini-3.1-fl
 - `src/pages/Generate.tsx` — Lamp image generation page
 - `src/pages/GenerateFireplaces.tsx` — Fireplace image generation page
 - `src/pages/GenerateHero.tsx` — Hero image generation page
+- `src/components/OutdoorGrid.tsx` — Outdoor light grid component
+- `src/pages/OutdoorDetail.tsx` — Outdoor light detail page (uses `useParams()` for ID)
+- `src/pages/GenerateOutdoor.tsx` — Outdoor light image generation page
 - Dark mode state lives in `App.tsx`, toggling the `dark` class on `<html>`
 - Routing via React Router v7 `<BrowserRouter>` wrapping `<App>` in `main.tsx`
 

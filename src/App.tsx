@@ -5,6 +5,8 @@ import { ProductGrid } from "./components/ProductGrid";
 import { ProductDetail } from "./pages/ProductDetail";
 import { FireplaceGrid } from "./components/FireplaceGrid";
 import { FireplaceDetail } from "./pages/FireplaceDetail";
+import { OutdoorGrid } from "./components/OutdoorGrid";
+import { OutdoorDetail } from "./pages/OutdoorDetail";
 import { Home } from "./pages/Home";
 
 const Generate = lazy(() =>
@@ -20,6 +22,12 @@ const GenerateFireplaces = lazy(() =>
 const GenerateHero = lazy(() =>
   import("./pages/GenerateHero").then((m) => ({
     default: m.GenerateHero,
+  })),
+);
+
+const GenerateOutdoor = lazy(() =>
+  import("./pages/GenerateOutdoor").then((m) => ({
+    default: m.GenerateOutdoor,
   })),
 );
 
@@ -124,6 +132,36 @@ function App() {
         />
 
         <Route
+          path="/outdoor"
+          element={
+            <div className="min-h-screen bg-surface-light transition-colors duration-300 dark:bg-surface-dark">
+              <Header isDark={isDark} onToggle={handleToggle} currentSection="outdoor" />
+              <OutdoorGrid isDark={isDark} />
+              <footer className="border-t border-border-light px-4 py-8 transition-colors duration-300 dark:border-border-dark sm:px-6">
+                <div className="mx-auto max-w-7xl">
+                  <div className="flex flex-col items-center justify-between gap-2 sm:flex-row">
+                    <p className="text-xs text-[#78716C] dark:text-[#A8A097]">
+                      ILLUMINATE&ensp;&middot;&ensp;Nordic Home
+                    </p>
+                    <p className="text-xs text-[#78716C] dark:text-[#A8A097]">
+                      &copy; 2026&ensp;&middot;&ensp;Free delivery over &pound;75
+                    </p>
+                  </div>
+                  <p className="mt-3 text-center text-[0.6875rem] text-[#78716C]/60 dark:text-[#A8A097]/60">
+                    A showcase by Charlie Waite&ensp;&middot;&ensp;Not a real store&ensp;&middot;&ensp;Product images generated with AI
+                  </p>
+                </div>
+              </footer>
+            </div>
+          }
+        />
+
+        <Route
+          path="/outdoor/:id"
+          element={<OutdoorDetail isDark={isDark} onToggle={handleToggle} />}
+        />
+
+        <Route
           path="/generate/lamps"
           element={
             <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
@@ -146,6 +184,15 @@ function App() {
           element={
             <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
               <GenerateHero />
+            </Suspense>
+          }
+        />
+
+        <Route
+          path="/generate/outdoor"
+          element={
+            <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
+              <GenerateOutdoor />
             </Suspense>
           }
         />
