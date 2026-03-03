@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-ikea-blue: #0058A3;
+  --color-ikea-yellow: #FFDB00;
+  --color-amber-glow: #F59E0B;
+  --color-surface-light: #F7F5F2;
+  --color-surface-dark: #0D0D0B;
+  --color-card-light: #ffffff;
+  --color-card-dark: #1A1915;
+  --color-border-light: #E8E3DC;
+  --color-border-dark: #2A2720;
+  --font-display: "DM Serif Display", serif;
+  --font-body: "Inter", sans-serif;
+}
+
+html {
+  font-family: var(--font-body);
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Amber flash overlay keyframe — triggered when lights turn ON */
+@keyframes amber-flash {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.12;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.amber-flash {
+  animation: amber-flash 700ms ease-out forwards;
+}
