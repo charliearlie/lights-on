@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router";
 import { fireplaces } from "../data/fireplaces";
 import { type Product } from "../data/products";
 import { Header } from "../components/Header";
 import { ProductCard } from "../components/ProductCard";
 
 interface FireplaceDetailProps {
-  id: number;
   isDark: boolean;
   onToggle: () => void;
 }
@@ -21,16 +21,18 @@ function getRelated(product: Product, all: Product[]): Product[] {
   return [prev, next, third];
 }
 
-export function FireplaceDetail({ id, isDark, onToggle }: FireplaceDetailProps) {
+export function FireplaceDetail({ isDark, onToggle }: FireplaceDetailProps) {
+  const { id } = useParams();
+  const productId = Number(id);
   const [visible, setVisible] = useState(false);
-  const product = fireplaces.find((p) => p.id === id);
+  const product = fireplaces.find((p) => p.id === productId);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
     setVisible(false);
     const raf = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(raf);
-  }, [id]);
+  }, [productId]);
 
   if (!product) {
     return (
@@ -40,12 +42,12 @@ export function FireplaceDetail({ id, isDark, onToggle }: FireplaceDetailProps) 
           <p className="font-display text-[2rem] italic text-[#1C1917] dark:text-[#F5F0E8]">
             Fireplace not found
           </p>
-          <a
-            href="#fireplaces"
+          <Link
+            to="/fireplaces"
             className="mt-6 inline-block text-[0.75rem] font-medium uppercase tracking-[0.15em] text-[#78716C] transition-colors duration-150 hover:text-[#1C1917] dark:text-[#A8A097] dark:hover:text-[#F5F0E8]"
           >
             &larr; All fireplaces
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -68,8 +70,8 @@ export function FireplaceDetail({ id, isDark, onToggle }: FireplaceDetailProps) 
       >
         {/* Back navigation */}
         <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 lg:px-8">
-          <a
-            href="#fireplaces"
+          <Link
+            to="/fireplaces"
             className="inline-flex items-center gap-1.5 text-[0.75rem] font-medium uppercase tracking-[0.15em] text-[#78716C] transition-colors duration-150 hover:text-[#1C1917] dark:text-[#A8A097] dark:hover:text-[#F5F0E8]"
           >
             <svg
@@ -86,7 +88,7 @@ export function FireplaceDetail({ id, isDark, onToggle }: FireplaceDetailProps) 
               <path d="M9 2.5L4.5 7L9 11.5" />
             </svg>
             All fireplaces
-          </a>
+          </Link>
         </div>
 
         {/* Two-column product layout */}
@@ -172,7 +174,7 @@ export function FireplaceDetail({ id, isDark, onToggle }: FireplaceDetailProps) 
             <div className="flex gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-3 sm:gap-5 sm:overflow-visible sm:pb-0">
               {related.map((p, i) => (
                 <div key={p.id} className="min-w-[220px] sm:min-w-0">
-                  <ProductCard product={p} isDark={isDark} index={i} linkPrefix="fireplace" />
+                  <ProductCard product={p} isDark={isDark} index={i} linkPrefix="fireplaces" />
                 </div>
               ))}
             </div>
@@ -185,7 +187,7 @@ export function FireplaceDetail({ id, isDark, onToggle }: FireplaceDetailProps) 
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col items-center justify-between gap-2 sm:flex-row">
             <p className="text-xs text-[#78716C] dark:text-[#A8A097]">
-              LIGHTS ON&ensp;&middot;&ensp;Nordic Home
+              ILLUMINATE&ensp;&middot;&ensp;Nordic Home
             </p>
             <p className="text-xs text-[#78716C] dark:text-[#A8A097]">
               &copy; 2026&ensp;&middot;&ensp;Free delivery over &pound;75

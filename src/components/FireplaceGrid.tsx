@@ -30,7 +30,7 @@ export function FireplaceGrid({ isDark }: FireplaceGridProps) {
               product={product}
               isDark={isDark}
               index={index}
-              linkPrefix="fireplace"
+              linkPrefix="fireplaces"
             />
           ))}
         </div>

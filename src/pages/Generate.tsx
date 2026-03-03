@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import { GoogleGenAI } from "@google/genai";
 import { products, type Product } from "../data/products";
 import { saveImage, loadImage } from "../data/imageStore";
@@ -279,12 +280,12 @@ export function Generate() {
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex items-center gap-3">
-            <a
-              href="#"
+            <Link
+              to="/lamps"
               className="text-sm text-ikea-blue hover:underline dark:text-ikea-yellow"
             >
               &larr; Back to Store
-            </a>
+            </Link>
             <h1 className="text-xl font-black text-gray-900 dark:text-white">
               Image Generator
             </h1>

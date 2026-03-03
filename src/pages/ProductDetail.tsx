@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router";
 import { products, type Product } from "../data/products";
 import { Header } from "../components/Header";
 import { ProductCard } from "../components/ProductCard";
 
 interface ProductDetailProps {
-  id: number;
   isDark: boolean;
   onToggle: () => void;
 }
@@ -20,16 +20,18 @@ function getRelated(product: Product, all: Product[]): Product[] {
   return [prev, next, third];
 }
 
-export function ProductDetail({ id, isDark, onToggle }: ProductDetailProps) {
+export function ProductDetail({ isDark, onToggle }: ProductDetailProps) {
+  const { id } = useParams();
+  const productId = Number(id);
   const [visible, setVisible] = useState(false);
-  const product = products.find((p) => p.id === id);
+  const product = products.find((p) => p.id === productId);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
     setVisible(false);
     const raf = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(raf);
-  }, [id]);
+  }, [productId]);
 
   if (!product) {
     return (
@@ -39,12 +41,12 @@ export function ProductDetail({ id, isDark, onToggle }: ProductDetailProps) {
           <p className="font-display text-[2rem] italic text-[#1C1917] dark:text-[#F5F0E8]">
             Lamp not found
           </p>
-          <a
-            href="#"
+          <Link
+            to="/lamps"
             className="mt-6 inline-block text-[0.75rem] font-medium uppercase tracking-[0.15em] text-[#78716C] transition-colors duration-150 hover:text-[#1C1917] dark:text-[#A8A097] dark:hover:text-[#F5F0E8]"
           >
             &larr; All lamps
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -67,8 +69,8 @@ export function ProductDetail({ id, isDark, onToggle }: ProductDetailProps) {
       >
         {/* Back navigation */}
         <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 lg:px-8">
-          <a
-            href="#"
+          <Link
+            to="/lamps"
             className="inline-flex items-center gap-1.5 text-[0.75rem] font-medium uppercase tracking-[0.15em] text-[#78716C] transition-colors duration-150 hover:text-[#1C1917] dark:text-[#A8A097] dark:hover:text-[#F5F0E8]"
           >
             <svg
@@ -85,7 +87,7 @@ export function ProductDetail({ id, isDark, onToggle }: ProductDetailProps) {
               <path d="M9 2.5L4.5 7L9 11.5" />
             </svg>
             All lamps
-          </a>
+          </Link>
         </div>
 
         {/* Two-column product layout */}
@@ -184,7 +186,7 @@ export function ProductDetail({ id, isDark, onToggle }: ProductDetailProps) {
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col items-center justify-between gap-2 sm:flex-row">
             <p className="text-xs text-[#78716C] dark:text-[#A8A097]">
-              LIGHTS ON&ensp;&middot;&ensp;Nordic Home
+              ILLUMINATE&ensp;&middot;&ensp;Nordic Home
             </p>
             <p className="text-xs text-[#78716C] dark:text-[#A8A097]">
               &copy; 2026&ensp;&middot;&ensp;Free delivery over &pound;75
