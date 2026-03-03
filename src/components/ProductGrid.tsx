@@ -24,11 +24,12 @@ export function ProductGrid({ isDark }: ProductGridProps) {
       {/* Product grid */}
       <div className="py-6 sm:py-8">
         <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-4">
-          {products.map((product) => (
+          {products.map((product, index) => (
             <ProductCard
               key={product.id}
               product={product}
               isDark={isDark}
+              index={index}
             />
           ))}
         </div>

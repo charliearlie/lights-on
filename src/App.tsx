@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Header } from "./components/Header";
 import { ProductGrid } from "./components/ProductGrid";
+import { ProductDetail } from "./pages/ProductDetail";
 
 const Generate = lazy(() =>
   import("./pages/Generate").then((m) => ({ default: m.Generate })),
@@ -51,6 +52,23 @@ function App() {
       <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
         <Generate />
       </Suspense>
+    );
+  }
+
+  const productMatch = hash.match(/^#product\/(\d+)$/);
+  if (productMatch) {
+    const productId = Number(productMatch[1]);
+    return (
+      <>
+        {showFlash && (
+          <div
+            className="amber-flash pointer-events-none fixed inset-0 z-50"
+            style={{ backgroundColor: "#F59E0B" }}
+            aria-hidden="true"
+          />
+        )}
+        <ProductDetail id={productId} isDark={isDark} onToggle={handleToggle} />
+      </>
     );
   }
 
