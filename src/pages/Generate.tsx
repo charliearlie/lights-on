@@ -3,7 +3,17 @@ import { GoogleGenAI } from "@google/genai";
 import { products, type Product } from "../data/products";
 import { saveImage, loadImage } from "../data/imageStore";
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+function getAI() {
+  const key = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!key) throw new Error("VITE_GEMINI_API_KEY is not set");
+  return new GoogleGenAI({ apiKey: key });
+}
+
+let _ai: GoogleGenAI | null = null;
+function ai() {
+  if (!_ai) _ai = getAI();
+  return _ai;
+}
 
 interface LampImages {
   off: string | null;
@@ -13,7 +23,7 @@ interface LampImages {
 type ImageMap = Record<number, LampImages>;
 
 function extractImageDataUri(
-  response: Awaited<ReturnType<typeof ai.models.generateContent>>,
+  response: Awaited<ReturnType<GoogleGenAI["models"]["generateContent"]>>,
   log?: (msg: string) => void,
 ): string | null {
   const candidate = response.candidates?.[0];
@@ -59,7 +69,7 @@ async function generateLampPair(
 ): Promise<{ off: string | null; on: string | null }> {
   // Step 1: Generate the lamp in its OFF state
   log?.(`Step 1: Requesting OFF image for "${product.name}"...`);
-  const offResponse = await ai.models.generateContent({
+  const offResponse = await ai().models.generateContent({
     model: "gemini-3.1-flash-image-preview",
     contents: `Product photography of a Scandinavian-design ${product.description}.
 The lamp is turned OFF. No light emission. The scene is lit by soft ambient daylight. The lamp appears as an inert decorative object.
@@ -80,7 +90,7 @@ Style: IKEA catalog photography, minimal, modern, square format. No text or labe
   log?.(`Step 2: Requesting ON image using OFF image as reference...`);
   const { data, mimeType } = extractBase64(offImage);
 
-  const onResponse = await ai.models.generateContent({
+  const onResponse = await ai().models.generateContent({
     model: "gemini-3.1-flash-image-preview",
     contents: [
       {

@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Header } from "./components/Header";
 import { ProductGrid } from "./components/ProductGrid";
-import { Generate } from "./pages/Generate";
+
+const Generate = lazy(() =>
+  import("./pages/Generate").then((m) => ({ default: m.Generate })),
+);
 
 function useHash() {
   const [hash, setHash] = useState(window.location.hash);
@@ -44,7 +47,11 @@ function App() {
   };
 
   if (hash === "#generate") {
-    return <Generate />;
+    return (
+      <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
+        <Generate />
+      </Suspense>
+    );
   }
 
   return (
