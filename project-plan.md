@@ -3,6 +3,109 @@ Context
 Illuminate is an existing React Router SPA that showcases a Nordic-styled lamp and fireplace store. Its signature feature is a "Lights ON/OFF" toggle that switches every product image between a lights-off state (white/bright studio shots) and a lights-on state (dark, warm, atmospheric shots showing each lamp illuminated). The demo has received strong positive reception and is the developer's most popular project to date.
 The goal is to evolve this showcase into a revenue-generating platform by building a shared "image state transformation" engine powered by Google's Nano Banana API (Gemini 2.5 Flash Image), then deploying that engine across multiple monetisation channels simultaneously.
 
+---
+
+## Implementation Progress
+
+### Phase 0: React Router v7 Framework Mode — COMPLETE
+
+Migrated the entire app from client-rendered BrowserRouter SPA to React Router v7 framework mode with SSR.
+
+**What was done:**
+
+- Installed framework mode dependencies: `@react-router/node`, `@react-router/serve`, `isbot`, `@react-router/dev`, `@react-router/fs-routes`, `@netlify/vite-plugin-react-router`, `vite-tsconfig-paths`
+- Removed `@vitejs/plugin-react` (replaced by `@react-router/dev`)
+- Created `react-router.config.ts` with `ssr: true`
+- Updated `vite.config.ts` to use `reactRouter()` plugin + `tsconfigPaths()` + `netlifyPlugin()`
+- Consolidated TypeScript config into single `tsconfig.json` (deleted `tsconfig.app.json`, `tsconfig.node.json`)
+- Renamed `src/` to `app/` (framework mode convention)
+- Created `app/context/dark-mode.tsx` — React context replacing prop drilling for dark mode state (SSR-safe)
+- Created `app/components/Footer.tsx` — extracted from duplicated JSX across routes
+- Updated all components to use `useDarkMode()` hook instead of props: Header, DarkModeToggle, HeroToggle, ProductCard, ProductGrid, FireplaceGrid, OutdoorGrid
+- Created `app/routes.ts` with `flatRoutes()` file-based routing
+- Created all 11 route files in `app/routes/`:
+  - `_index.tsx` — Home page
+  - `lamps.tsx`, `lamps.$id.tsx` — Lamp grid + detail
+  - `fireplaces.tsx`, `fireplaces.$id.tsx` — Fireplace grid + detail
+  - `outdoor.tsx`, `outdoor.$id.tsx` — Outdoor grid + detail
+  - `generate.lamps.tsx`, `generate.fireplaces.tsx`, `generate.hero.tsx`, `generate.outdoor.tsx` — Image generators
+- Created `app/root.tsx` — HTML shell with DarkModeProvider, FOUC prevention script, amber flash overlay
+- Created `app/entry.client.tsx` — Client hydration with `hydrateRoot`
+- Created `app/entry.server.tsx` — Streaming SSR with `renderToPipeableStream` + bot detection
+- Deleted obsolete files: `index.html`, `app/main.tsx`, `app/App.tsx`, old page files
+- Updated `netlify.toml` (build command → `react-router build`, publish → `build/client`)
+- Updated `.gitignore` (added `.react-router/`, `build/`)
+- Updated `eslint.config.js` (added `build`, `.react-router` to ignores)
+
+**Verified:** Build produces `build/client/` + `build/server/`. Dev server renders SSR HTML. Dark mode toggle, image crossfade, and client navigation all work correctly.
+
+### Phase 1: The Shared Engine — COMPLETE
+
+Built all core engine services that power every revenue channel.
+
+**What was done:**
+
+- Installed `stripe` (v20.4.0) and `@supabase/supabase-js`
+- Created `app/services/nano-banana.server.ts`:
+  - `transformImage()` — Sends image + prompt to Gemini via `@google/genai` SDK
+  - 6 prompt templates: `lights-on`, `lights-off`, `day-to-night`, `night-to-day`, `empty-to-staged`, `plain-to-lifestyle`
+  - Retry with exponential backoff (3 attempts, 1s/2s/4s delays)
+  - In-memory SHA-256 cache keyed by source image + transformation type
+  - `batchTransform()` — Sequential processing to respect rate limits
+  - Uses `NANO_BANANA_API_KEY` env var (server-only via `.server.ts` suffix)
+- Created `app/services/supabase.server.ts`:
+  - `getSupabaseAdmin()` — Service role client using `SUPABASE_URL` + `SUPABASE_SECRET_KEY`
+  - Singleton pattern, auth disabled (admin client)
+- Created `app/services/supabase.client.ts`:
+  - `getSupabase()` — Browser client using `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY`
+  - Singleton pattern
+- Created `app/services/stripe.server.ts`:
+  - `getStripe()` — Stripe client using `STRIPE_SECRET_KEY`
+  - `createCustomer()`, `createCheckoutSession()`, `createSubscription()`, `cancelSubscription()`
+  - `constructWebhookEvent()` — Webhook signature verification using `STRIPE_WEBHOOK_SECRET`
+- Created `supabase/migrations/001_initial_schema.sql`:
+  - 5 tables: `profiles`, `projects`, `image_states`, `transformations`, `service_orders`
+  - RLS enabled on all tables with policies: users can only CRUD their own data
+  - Public projects and their image states are viewable by anyone
+  - Indexes on foreign keys and status columns
+- Created `app/components/image-toggle/ImageToggle.tsx`:
+  - Accepts array of `ImageState` objects (label, src, alt)
+  - 3 transition types: `crossfade` (opacity), `slider` (clip-path), `flip` (3D rotate)
+  - 4 trigger types: `switch` (dot indicators), `hover`, `click`, `external` (controlled)
+  - Supports controlled (`activeStateIndex`) and uncontrolled (`defaultStateIndex`) modes
+  - Keyboard accessible (Enter/Space for click trigger)
+- Created `app/routes/api.webhooks.stripe.tsx`:
+  - Action-only route (no UI)
+  - Handles: `checkout.session.completed`, `customer.subscription.created/updated/deleted`, `invoice.payment_succeeded/failed`
+  - Updates profile plan, limits, and resets usage on billing cycle
+- Created `app/routes/api.transform.tsx`:
+  - POST endpoint accepting `imageDataUri` + `transformationType`
+  - Auth-gated via Supabase JWT in Authorization header
+  - Checks usage limits before processing
+  - Calls `nano-banana.server.ts` and returns transformed image
+- Created `app/routes/_marketing.tsx` — Public layout route (Header + Outlet + Footer)
+- Created `app/routes/_app.tsx` — Authenticated layout route (checks auth in loader, redirects if unauthenticated)
+- Created skeleton routes with placeholder UI:
+  - `_marketing.studio.tsx` → `/studio` (Illuminate Studio landing)
+  - `studio.order.tsx` → `/studio/order` (Package selection)
+  - `_app.dashboard.tsx` → `/app` (User dashboard)
+  - `_app.project.$id.tsx` → `/app/project/:id` (Project editor)
+  - `_app.settings.tsx` → `/app/settings` (Account & billing)
+
+**Verified:** Build succeeds — 104 client modules, 46 server modules. Server-only `.server.ts` files excluded from client bundle.
+
+**Environment variables required:**
+- `NANO_BANANA_API_KEY` — Gemini API key for server-side transformations
+- `SUPABASE_URL` — Supabase project URL (server)
+- `SUPABASE_SECRET_KEY` — Supabase service role key (server)
+- `VITE_SUPABASE_URL` — Supabase project URL (client, prefixed for Vite)
+- `VITE_SUPABASE_PUBLISHABLE_KEY` — Supabase anon key (client)
+- `STRIPE_SECRET_KEY` — Stripe secret key
+- `STRIPE_WEBHOOK_SECRET` — Stripe webhook signing secret
+- `VITE_GEMINI_API_KEY` — Existing client-side Gemini key (for generate pages)
+
+---
+
 Phase 0: Upgrade to React Router v7 Framework Mode
 Why
 The current app is a client-rendered SPA. Every revenue channel requires server-side capabilities: API key protection for Nano Banana, Stripe webhook endpoints, SEO for marketing pages, and server-side image processing orchestration. React Router v7 framework mode (the spiritual successor to Remix) provides all of this while preserving the existing React Router codebase.
@@ -123,68 +226,87 @@ Implementation: This is mostly a Supabase row-level security + theming layer on 
 Defer until Channel B is stable. The work to enable this is incremental once the SaaS exists.
 
 Tech Stack
-LayerChoiceWhyFrameworkReact Router v7 (framework mode)Upgrade, not rewrite. SSR + loaders/actions. Shopify alignment.StylingTailwindCSSAlready in use (assumed). Utility-first, fast iteration.Database + AuthSupabaseAuth, Postgres, Storage, Realtime. Generous free tier.AI Image GenerationNano Banana API (Gemini 2.5 Flash Image)Strong at image editing/transformation. API access confirmed.PaymentsStripeCheckout, Subscriptions, Usage billing, Customer Portal.HostingVercel or Cloudflare PagesEdge deployment, serverless functions for loaders/actions.Image CDN/StorageSupabase Storage or Cloudflare R2Store source + generated images. Serve via CDN.Queue (if needed)Inngest or BullMQFor async batch transformation jobs. Can defer until needed.
-Estimated monthly infrastructure cost at MVP: Under £50/month (Supabase free tier, Vercel free tier, Nano Banana API usage pay-as-you-go, Stripe 1.4% + 20p per transaction UK).
+LayerChoiceWhyFrameworkReact Router v7 (framework mode)Upgrade, not rewrite. SSR + loaders/actions. Shopify alignment.StylingTailwindCSSAlready in use (assumed). Utility-first, fast iteration.Database + AuthSupabaseAuth, Postgres, Storage, Realtime. Generous free tier.AI Image GenerationNano Banana API (Gemini 2.5 Flash Image)Strong at image editing/transformation. API access confirmed.PaymentsStripeCheckout, Subscriptions, Usage billing, Customer Portal.HostingNetlifySSR support via @netlify/vite-plugin-react-router. Already deployed there.Image CDN/StorageSupabase Storage or Cloudflare R2Store source + generated images. Serve via CDN.Queue (if needed)Inngest or BullMQFor async batch transformation jobs. Can defer until needed.
+Estimated monthly infrastructure cost at MVP: Under £50/month (Supabase free tier, Netlify free tier, Nano Banana API usage pay-as-you-go, Stripe 1.4% + 20p per transaction UK).
 
-File Structure (Target)
+Current File Structure
+```
 illuminate/
 ├── app/
-│ ├── root.tsx # Root layout, global providers
-│ ├── entry.server.tsx # SSR entry
-│ ├── entry.client.tsx # Client hydration
-│ │
-│ ├── routes/
-│ │ ├── \_index.tsx # Homepage — the Illuminate showcase
-│ │ ├── \_marketing.tsx # Layout for marketing pages
-│ │ ├── \_marketing.studio.tsx # Productised service landing page
-│ │ ├── \_marketing.pricing.tsx # Pricing page
-│ │ │
-│ │ ├── \_app.tsx # Layout for authenticated app
-│ │ ├── \_app.dashboard.tsx # User dashboard
-│ │ ├── \_app.project.$id.tsx   # Project editor
-│   │   ├── _app.settings.tsx      # Account & billing
-│   │   │
-│   │   ├── _admin.tsx             # Admin layout
-│   │   ├── _admin.orders.tsx      # Manage service orders
-│   │   │
-│   │   ├── api.webhooks.stripe.tsx # Stripe webhook handler
-│   │   ├── api.transform.tsx       # Transformation API endpoint
-│   │   └── api.embed.$projectId.tsx # Serve embeddable widget JS
-│ │
-│ ├── components/
-│ │ ├── image-toggle/ # The core interactive toggle (extracted from showcase)
-│ │ │ ├── ImageToggle.tsx
-│ │ │ ├── transitions/ # Crossfade, slider, flip animations
-│ │ │ └── controls/ # Switch, slider, button, hover triggers
-│ │ ├── ui/ # Shared UI components
-│ │ └── marketing/ # Landing page sections
-│ │
-│ ├── services/
-│ │ ├── nano-banana.server.ts # Nano Banana API client (server-only)
-│ │ ├── stripe.server.ts # Stripe client + helpers
-│ │ ├── supabase.server.ts # Supabase admin client
-│ │ └── supabase.client.ts # Supabase browser client
-│ │
-│ ├── lib/
-│ │ ├── auth.ts # Auth helpers
-│ │ ├── billing.ts # Plan/usage logic
-│ │ └── image-processing.ts # Image resize, optimise, format
-│ │
-│ └── types/
-│ └── index.ts # Shared TypeScript types
+│   ├── root.tsx                          # HTML shell, DarkModeProvider, FOUC prevention
+│   ├── entry.server.tsx                  # Streaming SSR with bot detection
+│   ├── entry.client.tsx                  # Client hydration
+│   ├── routes.ts                         # File-based routing config (flatRoutes)
+│   │
+│   ├── context/
+│   │   └── dark-mode.tsx                 # React context for dark mode state
+│   │
+│   ├── routes/
+│   │   ├── _index.tsx                    # Homepage — the Illuminate showcase
+│   │   ├── lamps.tsx                     # Lamp product grid
+│   │   ├── lamps.$id.tsx                 # Lamp detail page
+│   │   ├── fireplaces.tsx                # Fireplace product grid
+│   │   ├── fireplaces.$id.tsx            # Fireplace detail page
+│   │   ├── outdoor.tsx                   # Outdoor light grid
+│   │   ├── outdoor.$id.tsx              # Outdoor light detail page
+│   │   ├── generate.lamps.tsx            # Lamp image generator
+│   │   ├── generate.fireplaces.tsx       # Fireplace image generator
+│   │   ├── generate.hero.tsx             # Hero image generator
+│   │   ├── generate.outdoor.tsx          # Outdoor image generator
+│   │   ├── _marketing.tsx                # Public layout (Header + Footer)
+│   │   ├── _marketing.studio.tsx         # Illuminate Studio landing (skeleton)
+│   │   ├── studio.order.tsx              # Package selection (skeleton)
+│   │   ├── _app.tsx                      # Authenticated layout (auth check in loader)
+│   │   ├── _app.dashboard.tsx            # User dashboard (skeleton)
+│   │   ├── _app.project.$id.tsx          # Project editor (skeleton)
+│   │   ├── _app.settings.tsx             # Account & billing (skeleton)
+│   │   ├── api.webhooks.stripe.tsx       # Stripe webhook handler
+│   │   └── api.transform.tsx             # Transformation API endpoint
+│   │
+│   ├── components/
+│   │   ├── Header.tsx                    # Site header with dark mode toggle
+│   │   ├── Footer.tsx                    # Site footer
+│   │   ├── DarkModeToggle.tsx            # Toggle switch component
+│   │   ├── HeroToggle.tsx                # Hero section toggle
+│   │   ├── ProductCard.tsx               # Product card with image crossfade
+│   │   ├── ProductGrid.tsx               # Lamp product grid
+│   │   ├── FireplaceGrid.tsx             # Fireplace product grid
+│   │   ├── OutdoorGrid.tsx               # Outdoor light grid
+│   │   └── image-toggle/
+│   │       └── ImageToggle.tsx           # Generalised multi-state toggle
+│   │
+│   ├── services/
+│   │   ├── nano-banana.server.ts         # AI transformation engine (server-only)
+│   │   ├── stripe.server.ts              # Stripe client + helpers (server-only)
+│   │   ├── supabase.server.ts            # Supabase admin client (server-only)
+│   │   └── supabase.client.ts            # Supabase browser client
+│   │
+│   ├── data/
+│   │   ├── products.ts                   # 16 lamp products
+│   │   ├── fireplaces.ts                 # 16 fireplace products
+│   │   ├── outdoor.ts                    # 16 outdoor light products
+│   │   └── imageStore.ts                 # localStorage image cache
+│   │
+│   └── pages/                            # Generate pages (re-exported by routes)
+│       ├── Generate.tsx                  # Lamp image generator
+│       ├── GenerateFireplaces.tsx         # Fireplace image generator
+│       ├── GenerateHero.tsx              # Hero image generator
+│       └── GenerateOutdoor.tsx           # Outdoor image generator
 │
 ├── public/
-│ ├── images/ # Static showcase images
-│ └── embed.js # Compiled embeddable toggle widget
+│   └── images/                           # Static product images (on/off pairs)
 │
 ├── supabase/
-│ └── migrations/ # Database schema migrations
+│   └── migrations/
+│       └── 001_initial_schema.sql        # profiles, projects, image_states, transformations, service_orders
 │
-├── react-router.config.ts
-├── vite.config.ts
-├── tailwind.config.ts
-├── .env.local # NANO_BANANA_API_KEY, STRIPE_SECRET_KEY, SUPABASE_URL, etc.
-└── package.json
+├── react-router.config.ts                # Framework mode config (ssr: true)
+├── vite.config.ts                        # Vite + reactRouter + tailwind + tsconfig paths + netlify
+├── tsconfig.json                         # Consolidated TypeScript config
+├── netlify.toml                          # Build: react-router build, publish: build/client
+├── package.json
+└── CLAUDE.md
+```
 
 Database Schema (Supabase / Postgres)
 sql-- Users (extends Supabase auth.users)
