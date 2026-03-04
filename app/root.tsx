@@ -30,7 +30,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var s=localStorage.getItem("theme");var d=s?s==="dark":window.matchMedia("(prefers-color-scheme:dark)").matches;if(d)document.documentElement.classList.add("dark")})()`,
+            __html: `(function(){var s=localStorage.getItem("theme");var d=s?s==="dark":window.matchMedia("(prefers-color-scheme:dark)").matches;if(d)document.documentElement.classList.add("dark");requestAnimationFrame(function(){document.documentElement.classList.add("theme-resolved")})})()`,
           }}
         />
       </head>

@@ -37,6 +37,18 @@ export async function action({ request }: Route.ActionArgs) {
           })
           .eq("id", userId);
       }
+
+      // Service order handling
+      const orderId = session.metadata?.order_id;
+      if (orderId) {
+        await supabase
+          .from("service_orders")
+          .update({
+            stripe_payment_id: session.payment_intent as string,
+            status: "paid",
+          })
+          .eq("id", orderId);
+      }
       break;
     }
 

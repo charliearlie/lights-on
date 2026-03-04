@@ -130,6 +130,47 @@ Added shared-element view transitions for product grid ↔ detail page navigatio
 - `STRIPE_WEBHOOK_SECRET` — Stripe webhook signing secret
 - `VITE_GEMINI_API_KEY` — Existing client-side Gemini key (for generate pages)
 
+### Phase 2A: Illuminate Studio (Landing + Order Flow) — COMPLETE
+
+Built the `/studio` marketing landing page and `/studio/order` multi-step checkout wizard for Channel A (productised service).
+
+**What was done:**
+
+- Created `app/data/studio-packages.ts` — Package definitions (Starter £149, Pro £299, Enterprise POA)
+- Created `app/data/studio-packages.server.ts` — Resolves Stripe Price IDs from `STRIPE_PRICE_STARTER` / `STRIPE_PRICE_PRO` env vars
+- Created 5 landing page components in `app/components/studio/`:
+  - `StudioHero.tsx` — Full-width hero with 3x3 product grid (all categories), live dark mode toggle, "Get Started" CTA
+  - `HowItWorks.tsx` — 3-step process: Upload → AI Transforms → Interactive Showcase
+  - `SiteShowcase.tsx` — Category cards linking to /lamps, /fireplaces, /outdoor with crossfade previews
+  - `PricingCards.tsx` — Dual-mode component (display for landing page, select for wizard) with Starter/Pro/Enterprise cards
+  - `ContactCTA.tsx` — CTA section with mailto contact for enterprise enquiries
+- Created 6 wizard step components in `app/components/studio/wizard/`:
+  - `StepIndicator.tsx` — Horizontal 4-step progress bar with checkmarks
+  - `StepPackage.tsx` — Package selection using PricingCards in select mode
+  - `StepDetails.tsx` — Email (with regex validation), name, brief form fields
+  - `StepUpload.tsx` — Drag-and-drop image upload with thumbnails + "send later" checkbox
+  - `StepReview.tsx` — Order summary with package, customer, brief, image count
+  - `StepSuccess.tsx` — Post-payment confirmation with order reference
+- Updated `app/routes/_marketing.studio.tsx` — Assembled full landing page from components
+- Updated `app/routes/studio.order.tsx` — Multi-step wizard with:
+  - Client-side wizard state management (step, package, details, files)
+  - Deep-linking from pricing cards via `?package=` query param
+  - Client-side file upload to Supabase Storage (`order-uploads` bucket)
+  - Server action: creates service_order → Stripe customer → Stripe Checkout session → redirect
+  - Cancelled payment recovery (returns to review step with error banner)
+  - Success page with order reference and email (preserved through Stripe redirect via URL param)
+- Updated `app/routes/api.webhooks.stripe.tsx` — Added service order handling: sets `status: "paid"` and `stripe_payment_id` on `checkout.session.completed` when `metadata.order_id` is present
+- Created `supabase/migrations/002_order_uploads_storage.sql` — Private storage bucket with anonymous upload policy (scoped to `orders/` prefix) for guest checkout
+- Created Stripe products and one-time prices via Stripe MCP:
+  - Starter: `prod_U5PHUbeRoSuKxP` / `price_1T7ETvADhNlC6kMfQ6FsCnOx` (£149)
+  - Pro: `prod_U5PHWxFCdzma3Y` / `price_1T7EU9ADhNlC6kMfFSKzNIAx` (£299)
+
+**New environment variables:**
+- `STRIPE_PRICE_STARTER` — Stripe Price ID for Starter package (one-time £149)
+- `STRIPE_PRICE_PRO` — Stripe Price ID for Pro package (one-time £299)
+
+**Verified:** Production build succeeds (156 client modules, 61 server modules). Supabase migration applied. Stripe products and prices created. Code reviewed and critical issues fixed (null URL guard, object URL memory leak, email preservation through redirect, upload error feedback, email validation).
+
 ---
 
 Phase 0: Upgrade to React Router v7 Framework Mode

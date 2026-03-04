@@ -1,16 +1,13 @@
-import { Link } from "react-router";
 import { Header } from "../components/Header";
 import { HeroToggle } from "../components/HeroToggle";
 import { Footer } from "../components/Footer";
-import { products } from "../data/products";
-import { fireplaces } from "../data/fireplaces";
-import { outdoor } from "../data/outdoor";
+import { SiteShowcase } from "../components/studio/SiteShowcase";
+import { HowItWorks } from "../components/studio/HowItWorks";
+import { PricingCards } from "../components/studio/PricingCards";
+import { ContactCTA } from "../components/studio/ContactCTA";
+import { studioPackages } from "../data/studio-packages";
 
 export default function HomePage() {
-  const featuredLamp = products[0];
-  const featuredFireplace = fireplaces[0];
-  const featuredOutdoor = outdoor[0];
-
   return (
     <div className="min-h-screen bg-surface-light transition-colors duration-300 dark:bg-surface-dark">
       <Header />
@@ -66,168 +63,21 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Category Cards */}
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-        <p className="mb-8 text-center text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">
-          Collections
+      <SiteShowcase />
+      <HowItWorks />
+
+      {/* Pricing */}
+      <section id="pricing" className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+        <p className="mb-2 text-center text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">
+          Pricing
         </p>
-
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Lamps Card */}
-          <Link
-            to="/lamps"
-            className="group block overflow-hidden rounded-xl border border-border-light transition-all duration-200 hover:scale-[1.015] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:border-border-dark dark:hover:shadow-[0_0_0_1px_rgba(245,158,11,0.2),0_8px_24px_rgba(245,158,11,0.08)]"
-          >
-            <div className="relative aspect-4/3 overflow-hidden bg-surface-light dark:bg-surface-dark">
-              <img
-                src={featuredLamp.thumbOff}
-                alt={`${featuredLamp.name} off`}
-                width={500}
-                height={500}
-                decoding="async"
-                className="absolute inset-0 h-full w-full object-cover opacity-100 transition-opacity duration-500 dark:opacity-0"
-              />
-              <img
-                src={featuredLamp.thumbOn}
-                alt={`${featuredLamp.name} on`}
-                width={500}
-                height={500}
-                decoding="async"
-                className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 dark:opacity-100"
-              />
-            </div>
-            <div className="border-t border-border-light bg-card-light px-4 pb-4 pt-3 transition-colors duration-300 dark:border-border-dark dark:bg-card-dark">
-              <h3 className="font-display text-base italic leading-tight text-[#1C1917] dark:text-[#F5F0E8]">
-                Lamps
-              </h3>
-              <p className="mt-0.5 text-[0.8125rem] text-[#78716C] dark:text-[#A8A097]">
-                {products.length} products
-              </p>
-              <span className="mt-2.5 flex items-center gap-0.5 text-xs font-medium text-ikea-blue dark:text-amber-glow">
-                Explore
-                <svg
-                  className="-translate-x-1 transition-transform duration-150 group-hover:translate-x-0"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                >
-                  <path
-                    d="M4.5 2.5L8 6L4.5 9.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-            </div>
-          </Link>
-
-          {/* Fireplaces Card */}
-          <Link
-            to="/fireplaces"
-            className="group block overflow-hidden rounded-xl border border-border-light transition-all duration-200 hover:scale-[1.015] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:border-border-dark dark:hover:shadow-[0_0_0_1px_rgba(245,158,11,0.2),0_8px_24px_rgba(245,158,11,0.08)]"
-          >
-            <div className="relative aspect-4/3 overflow-hidden bg-surface-light dark:bg-surface-dark">
-              <img
-                src={featuredFireplace.thumbOff}
-                alt={`${featuredFireplace.name} off`}
-                width={500}
-                height={500}
-                decoding="async"
-                className="absolute inset-0 h-full w-full object-cover opacity-100 transition-opacity duration-500 dark:opacity-0"
-              />
-              <img
-                src={featuredFireplace.thumbOn}
-                alt={`${featuredFireplace.name} on`}
-                width={500}
-                height={500}
-                decoding="async"
-                className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 dark:opacity-100"
-              />
-            </div>
-            <div className="border-t border-border-light bg-card-light px-4 pb-4 pt-3 transition-colors duration-300 dark:border-border-dark dark:bg-card-dark">
-              <h3 className="font-display text-base italic leading-tight text-[#1C1917] dark:text-[#F5F0E8]">
-                Fireplaces
-              </h3>
-              <p className="mt-0.5 text-[0.8125rem] text-[#78716C] dark:text-[#A8A097]">
-                {fireplaces.length} products
-              </p>
-              <span className="mt-2.5 flex items-center gap-0.5 text-xs font-medium text-ikea-blue dark:text-amber-glow">
-                Explore
-                <svg
-                  className="-translate-x-1 transition-transform duration-150 group-hover:translate-x-0"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                >
-                  <path
-                    d="M4.5 2.5L8 6L4.5 9.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-            </div>
-          </Link>
-
-          {/* Outdoor Card */}
-          <Link
-            to="/outdoor"
-            className="group block overflow-hidden rounded-xl border border-border-light transition-all duration-200 hover:scale-[1.015] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:border-border-dark dark:hover:shadow-[0_0_0_1px_rgba(245,158,11,0.2),0_8px_24px_rgba(245,158,11,0.08)]"
-          >
-            <div className="relative aspect-4/3 overflow-hidden bg-surface-light dark:bg-surface-dark">
-              <img
-                src={featuredOutdoor.thumbOff}
-                alt={`${featuredOutdoor.name} off`}
-                width={500}
-                height={500}
-                decoding="async"
-                className="absolute inset-0 h-full w-full object-cover opacity-100 transition-opacity duration-500 dark:opacity-0"
-              />
-              <img
-                src={featuredOutdoor.thumbOn}
-                alt={`${featuredOutdoor.name} on`}
-                width={500}
-                height={500}
-                decoding="async"
-                className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 dark:opacity-100"
-              />
-            </div>
-            <div className="border-t border-border-light bg-card-light px-4 pb-4 pt-3 transition-colors duration-300 dark:border-border-dark dark:bg-card-dark">
-              <h3 className="font-display text-base italic leading-tight text-[#1C1917] dark:text-[#F5F0E8]">
-                Outdoor
-              </h3>
-              <p className="mt-0.5 text-[0.8125rem] text-[#78716C] dark:text-[#A8A097]">
-                {outdoor.length} products
-              </p>
-              <span className="mt-2.5 flex items-center gap-0.5 text-xs font-medium text-ikea-blue dark:text-amber-glow">
-                Explore
-                <svg
-                  className="-translate-x-1 transition-transform duration-150 group-hover:translate-x-0"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                >
-                  <path
-                    d="M4.5 2.5L8 6L4.5 9.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-            </div>
-          </Link>
-        </div>
+        <h2 className="mb-10 text-center font-display text-[2rem] italic text-[#1C1917] dark:text-[#F5F0E8]">
+          Simple, transparent pricing
+        </h2>
+        <PricingCards packages={studioPackages} mode="display" />
       </section>
 
+      <ContactCTA />
       <Footer />
     </div>
   );
