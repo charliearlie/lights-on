@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link, useParams } from "react-router";
 import { fireplaces } from "../data/fireplaces";
 import { type Product } from "../data/products";
@@ -22,14 +22,10 @@ export default function FireplaceDetailPage() {
   const { isDark } = useDarkMode();
   const { id } = useParams();
   const productId = Number(id);
-  const [visible, setVisible] = useState(false);
   const product = fireplaces.find((p) => p.id === productId);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
-    setVisible(false);
-    const raf = requestAnimationFrame(() => setVisible(true));
-    return () => cancelAnimationFrame(raf);
   }, [productId]);
 
   if (!product) {
@@ -57,18 +53,11 @@ export default function FireplaceDetailPage() {
     <div className="min-h-screen bg-surface-light transition-colors duration-300 dark:bg-surface-dark">
       <Header currentSection="fireplaces" />
 
-      <main
-        style={{
-          transition:
-            "opacity 400ms cubic-bezier(0.16,1,0.3,1), transform 400ms cubic-bezier(0.16,1,0.3,1)",
-        }}
-        className={
-          visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-        }
-      >
+      <main>
         <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 lg:px-8">
           <Link
             to="/fireplaces"
+            viewTransition
             className="inline-flex items-center gap-1.5 text-[0.75rem] font-medium uppercase tracking-[0.15em] text-[#78716C] transition-colors duration-150 hover:text-[#1C1917] dark:text-[#A8A097] dark:hover:text-[#F5F0E8]"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -80,7 +69,7 @@ export default function FireplaceDetailPage() {
 
         <div className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 lg:flex lg:items-start lg:gap-16 lg:px-8">
           <div className="w-full lg:sticky lg:top-27.5 lg:w-[52%]">
-            <div className="relative aspect-square overflow-hidden rounded-2xl bg-surface-light ring-1 ring-border-light dark:bg-surface-dark dark:ring-border-dark">
+            <div className="relative aspect-square overflow-hidden rounded-2xl bg-surface-light ring-1 ring-border-light dark:bg-surface-dark dark:ring-border-dark" style={{ viewTransitionName: `product-image-${productId}` }}>
               <img src={product.imageOff} alt={`${product.name} — unlit`} width={1024} height={1024} decoding="async" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: isDark ? 0 : 1 }} />
               <img src={product.imageOn} alt={`${product.name} — lit`} width={1024} height={1024} decoding="async" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: isDark ? 1 : 0 }} />
             </div>

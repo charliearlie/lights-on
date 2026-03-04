@@ -42,3 +42,17 @@ body {
 .amber-flash {
   animation: amber-flash 700ms ease-out forwards;
 }
+
+/* ---- View Transition: shared product-image hero animation ---- */
+
+/* Disable default crossfade on root so only named elements animate */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+/* Smooth easing for all named view-transition groups (product images) */
+::view-transition-group(*) {
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}

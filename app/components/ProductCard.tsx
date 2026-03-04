@@ -13,9 +13,9 @@ export function ProductCard({ product, index, linkPrefix = "lamps" }: ProductCar
   // First row (4 cards) loads eagerly; rest are lazy
   const aboveFold = index < 4;
   return (
-    <Link to={`/${linkPrefix}/${product.id}`} className="group block overflow-hidden rounded-xl border border-border-light transition-all duration-200 hover:scale-[1.015] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:border-border-dark dark:hover:shadow-[0_0_0_1px_rgba(245,158,11,0.2),0_8px_24px_rgba(245,158,11,0.08)]">
+    <Link to={`/${linkPrefix}/${product.id}`} viewTransition className="group block overflow-hidden rounded-xl border border-border-light transition-all duration-200 hover:scale-[1.015] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:border-border-dark dark:hover:shadow-[0_0_0_1px_rgba(245,158,11,0.2),0_8px_24px_rgba(245,158,11,0.08)]">
       {/* Image area — bg matches page surface so lamp backgrounds blend */}
-      <div className="relative aspect-square overflow-hidden bg-surface-light dark:bg-surface-dark">
+      <div className="relative aspect-square overflow-hidden bg-surface-light dark:bg-surface-dark" style={{ viewTransitionName: `product-image-${product.id}` }}>
         <img
           src={product.thumbOff}
           alt={`${product.name} off`}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link, useParams } from "react-router";
 import { products, type Product } from "../data/products";
 import { Header } from "../components/Header";
@@ -21,14 +21,10 @@ export default function LampDetailPage() {
   const { isDark } = useDarkMode();
   const { id } = useParams();
   const productId = Number(id);
-  const [visible, setVisible] = useState(false);
   const product = products.find((p) => p.id === productId);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
-    setVisible(false);
-    const raf = requestAnimationFrame(() => setVisible(true));
-    return () => cancelAnimationFrame(raf);
   }, [productId]);
 
   if (!product) {
@@ -56,19 +52,12 @@ export default function LampDetailPage() {
     <div className="min-h-screen bg-surface-light transition-colors duration-300 dark:bg-surface-dark">
       <Header currentSection="lamps" />
 
-      <main
-        style={{
-          transition:
-            "opacity 400ms cubic-bezier(0.16,1,0.3,1), transform 400ms cubic-bezier(0.16,1,0.3,1)",
-        }}
-        className={
-          visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-        }
-      >
+      <main>
         {/* Back navigation */}
         <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 lg:px-8">
           <Link
             to="/lamps"
+            viewTransition
             className="inline-flex items-center gap-1.5 text-[0.75rem] font-medium uppercase tracking-[0.15em] text-[#78716C] transition-colors duration-150 hover:text-[#1C1917] dark:text-[#A8A097] dark:hover:text-[#F5F0E8]"
           >
             <svg
@@ -92,7 +81,7 @@ export default function LampDetailPage() {
         <div className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 lg:flex lg:items-start lg:gap-16 lg:px-8">
           {/* Image — sticky on desktop */}
           <div className="w-full lg:sticky lg:top-27.5 lg:w-[52%]">
-            <div className="relative aspect-square overflow-hidden rounded-2xl bg-surface-light ring-1 ring-border-light dark:bg-surface-dark dark:ring-border-dark">
+            <div className="relative aspect-square overflow-hidden rounded-2xl bg-surface-light ring-1 ring-border-light dark:bg-surface-dark dark:ring-border-dark" style={{ viewTransitionName: `product-image-${productId}` }}>
               <img
                 src={product.imageOff}
                 alt={`${product.name} — unlit`}
