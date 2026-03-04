@@ -94,6 +94,32 @@ Built all core engine services that power every revenue channel.
 
 **Verified:** Build succeeds — 104 client modules, 46 server modules. Server-only `.server.ts` files excluded from client bundle.
 
+### Phase 0.5: View Transitions — COMPLETE
+
+Added shared-element view transitions for product grid ↔ detail page navigation using the View Transitions API with React Router v7's `viewTransition` prop.
+
+**What was done:**
+
+- Created `app/hooks/useLastViewedProduct.ts` — sessionStorage helper to track which product card was clicked, so the correct card receives the `product-hero` viewTransitionName on back-navigation
+- Updated `app/components/ProductCard.tsx`:
+  - Added `isActive` prop and `useRef` for imperative viewTransitionName assignment
+  - Click handler saves product ID to sessionStorage and sets `viewTransitionName: "product-hero"` on the card's image container
+  - Clears any existing `[data-vt-hero]` element's viewTransitionName to prevent duplicates (e.g. when clicking related products on detail pages)
+- Updated grid components (`ProductGrid.tsx`, `FireplaceGrid.tsx`, `OutdoorGrid.tsx`):
+  - Read `activeId` synchronously via `useState(() => getLastViewedProduct())` so view transition snapshot captures the name
+  - Pass `isActive` prop to the clicked card so it receives `viewTransitionName: "product-hero"` on the new-state snapshot
+  - Clear sessionStorage after 600ms via `useEffect`
+- Updated detail pages (`lamps.$id.tsx`, `fireplaces.$id.tsx`, `outdoor.$id.tsx`):
+  - Hero image container: fixed `viewTransitionName: "product-hero"` + `data-vt-hero` attribute
+  - Info column: `viewTransitionName: "product-info"` for smooth content transition
+- Updated `app/index.css` — view transition CSS:
+  - Root `animation: none` (instant page swap, no background flash)
+  - `::view-transition-group(*)` with 400ms cubic-bezier easing
+  - `mix-blend-mode: plus-lighter` on `product-hero` image pair (prevents mid-crossfade transparency dip)
+  - `prefers-reduced-motion` media query for accessibility
+
+**Result:** Clicking a product card morphs its image into the detail page hero (400ms smooth animation). Navigating back morphs the hero back to the correct card. No floating cards, no page flash, no flicker on dark mode toggle.
+
 **Environment variables required:**
 - `NANO_BANANA_API_KEY` — Gemini API key for server-side transformations
 - `SUPABASE_URL` — Supabase project URL (server)

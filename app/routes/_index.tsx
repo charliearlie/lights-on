@@ -2,14 +2,11 @@ import { Link } from "react-router";
 import { Header } from "../components/Header";
 import { HeroToggle } from "../components/HeroToggle";
 import { Footer } from "../components/Footer";
-import { useDarkMode } from "../context/dark-mode";
 import { products } from "../data/products";
 import { fireplaces } from "../data/fireplaces";
 import { outdoor } from "../data/outdoor";
 
 export default function HomePage() {
-  const { isDark } = useDarkMode();
-
   const featuredLamp = products[0];
   const featuredFireplace = fireplaces[0];
   const featuredOutdoor = outdoor[0];
@@ -26,21 +23,13 @@ export default function HomePage() {
           alt="Showroom with lights off"
           decoding="async"
           fetchPriority="high"
-          className="absolute inset-0 h-full w-full object-cover"
-          style={{
-            opacity: isDark ? 0 : 1,
-            transition: "opacity 500ms ease",
-          }}
+          className="absolute inset-0 h-full w-full object-cover opacity-100 transition-opacity duration-500 dark:opacity-0"
         />
         <img
           src="/images/hero/webp/showroom-on.webp"
           alt="Showroom with lights on"
           decoding="async"
-          className="absolute inset-0 h-full w-full object-cover"
-          style={{
-            opacity: isDark ? 1 : 0,
-            transition: "opacity 500ms ease",
-          }}
+          className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 dark:opacity-100"
         />
 
         {/* Dark gradient overlay */}
@@ -96,11 +85,7 @@ export default function HomePage() {
                 width={500}
                 height={500}
                 decoding="async"
-                className="absolute inset-0 h-full w-full object-cover"
-                style={{
-                  opacity: isDark ? 0 : 1,
-                  transition: "opacity 500ms ease",
-                }}
+                className="absolute inset-0 h-full w-full object-cover opacity-100 transition-opacity duration-500 dark:opacity-0"
               />
               <img
                 src={featuredLamp.thumbOn}
@@ -108,11 +93,7 @@ export default function HomePage() {
                 width={500}
                 height={500}
                 decoding="async"
-                className="absolute inset-0 h-full w-full object-cover"
-                style={{
-                  opacity: isDark ? 1 : 0,
-                  transition: "opacity 500ms ease",
-                }}
+                className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 dark:opacity-100"
               />
             </div>
             <div className="border-t border-border-light bg-card-light px-4 pb-4 pt-3 transition-colors duration-300 dark:border-border-dark dark:bg-card-dark">
@@ -155,11 +136,7 @@ export default function HomePage() {
                 width={500}
                 height={500}
                 decoding="async"
-                className="absolute inset-0 h-full w-full object-cover"
-                style={{
-                  opacity: isDark ? 0 : 1,
-                  transition: "opacity 500ms ease",
-                }}
+                className="absolute inset-0 h-full w-full object-cover opacity-100 transition-opacity duration-500 dark:opacity-0"
               />
               <img
                 src={featuredFireplace.thumbOn}
@@ -167,11 +144,7 @@ export default function HomePage() {
                 width={500}
                 height={500}
                 decoding="async"
-                className="absolute inset-0 h-full w-full object-cover"
-                style={{
-                  opacity: isDark ? 1 : 0,
-                  transition: "opacity 500ms ease",
-                }}
+                className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 dark:opacity-100"
               />
             </div>
             <div className="border-t border-border-light bg-card-light px-4 pb-4 pt-3 transition-colors duration-300 dark:border-border-dark dark:bg-card-dark">
@@ -214,11 +187,7 @@ export default function HomePage() {
                 width={500}
                 height={500}
                 decoding="async"
-                className="absolute inset-0 h-full w-full object-cover"
-                style={{
-                  opacity: isDark ? 0 : 1,
-                  transition: "opacity 500ms ease",
-                }}
+                className="absolute inset-0 h-full w-full object-cover opacity-100 transition-opacity duration-500 dark:opacity-0"
               />
               <img
                 src={featuredOutdoor.thumbOn}
@@ -226,11 +195,7 @@ export default function HomePage() {
                 width={500}
                 height={500}
                 decoding="async"
-                className="absolute inset-0 h-full w-full object-cover"
-                style={{
-                  opacity: isDark ? 1 : 0,
-                  transition: "opacity 500ms ease",
-                }}
+                className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 dark:opacity-100"
               />
             </div>
             <div className="border-t border-border-light bg-card-light px-4 pb-4 pt-3 transition-colors duration-300 dark:border-border-dark dark:bg-card-dark">

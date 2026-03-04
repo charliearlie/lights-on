@@ -70,8 +70,8 @@ export default function OutdoorDetailPage() {
         <div className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 lg:flex lg:items-start lg:gap-16 lg:px-8">
           <div className="w-full lg:sticky lg:top-27.5 lg:w-[52%]">
             <div data-vt-hero className="relative aspect-square overflow-hidden rounded-2xl bg-surface-light ring-1 ring-border-light dark:bg-surface-dark dark:ring-border-dark" style={{ viewTransitionName: "product-hero" }}>
-              <img src={product.imageOff} alt={`${product.name} — unlit`} width={1024} height={1024} decoding="async" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: isDark ? 0 : 1 }} />
-              <img src={product.imageOn} alt={`${product.name} — lit`} width={1024} height={1024} decoding="async" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: isDark ? 1 : 0 }} />
+              <img src={product.imageOff} alt={`${product.name} — unlit`} width={1024} height={1024} decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-100 transition-opacity duration-500 dark:opacity-0" />
+              <img src={product.imageOn} alt={`${product.name} — lit`} width={1024} height={1024} decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 dark:opacity-100" />
             </div>
           </div>
 

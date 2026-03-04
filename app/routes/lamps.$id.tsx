@@ -88,8 +88,7 @@ export default function LampDetailPage() {
                 width={1024}
                 height={1024}
                 decoding="async"
-                className="absolute inset-0 h-full w-full object-cover"
-                style={{ opacity: isDark ? 0 : 1 }}
+                className="absolute inset-0 h-full w-full object-cover opacity-100 transition-opacity duration-500 dark:opacity-0"
               />
               <img
                 src={product.imageOn}
@@ -97,8 +96,7 @@ export default function LampDetailPage() {
                 width={1024}
                 height={1024}
                 decoding="async"
-                className="absolute inset-0 h-full w-full object-cover"
-                style={{ opacity: isDark ? 1 : 0 }}
+                className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 dark:opacity-100"
               />
             </div>
           </div>

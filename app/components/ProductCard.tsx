@@ -41,8 +41,7 @@ export function ProductCard({ product, index, linkPrefix = "lamps", isActive = f
           width={500}
           height={500}
           decoding="async"
-          className="absolute inset-0 h-full w-full object-cover"
-          style={{ opacity: isDark ? 0 : 1 }}
+          className="absolute inset-0 h-full w-full object-cover opacity-100 transition-opacity duration-500 dark:opacity-0"
           loading={aboveFold ? "eager" : "lazy"}
         />
         <img
@@ -51,8 +50,7 @@ export function ProductCard({ product, index, linkPrefix = "lamps", isActive = f
           width={500}
           height={500}
           decoding="async"
-          className="absolute inset-0 h-full w-full object-cover"
-          style={{ opacity: isDark ? 1 : 0 }}
+          className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 dark:opacity-100"
           loading="lazy"
         />
       </div>
