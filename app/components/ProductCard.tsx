@@ -71,7 +71,7 @@ export function ProductCard({ product, index, linkPrefix = "lamps", isActive = f
         <h3 className="font-display text-base italic leading-tight text-[#1C1917] dark:text-[#F5F0E8]">
           {product.name}
         </h3>
-        <p className="mt-0.5 text-[0.8125rem] text-[#78716C] dark:text-[#A8A097]">
+        <p className="mt-0.5 min-h-[2lh] text-[0.8125rem] text-[#78716C] dark:text-[#A8A097]">
           {product.description}
         </p>
         <div className="mt-2.5 flex items-center justify-between">

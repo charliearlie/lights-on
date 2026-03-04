@@ -132,27 +132,26 @@ Added shared-element view transitions for product grid ↔ detail page navigatio
 
 ### Phase 2A: Illuminate Studio (Landing + Order Flow) — COMPLETE
 
-Built the `/studio` marketing landing page and `/studio/order` multi-step checkout wizard for Channel A (productised service).
+Built the `/studio/order` multi-step checkout wizard for Channel A (productised service). Studio marketing content consolidated into the homepage.
 
 **What was done:**
 
-- Created `app/data/studio-packages.ts` — Package definitions (Starter £149, Pro £299, Enterprise POA)
+- Created `app/data/studio-packages.ts` — Package definitions (Starter £99, Pro £449, Enterprise POA)
 - Created `app/data/studio-packages.server.ts` — Resolves Stripe Price IDs from `STRIPE_PRICE_STARTER` / `STRIPE_PRICE_PRO` env vars
-- Created 5 landing page components in `app/components/studio/`:
-  - `StudioHero.tsx` — Full-width hero with 3x3 product grid (all categories), live dark mode toggle, "Get Started" CTA
-  - `HowItWorks.tsx` — 3-step process: Upload → AI Transforms → Interactive Showcase
-  - `SiteShowcase.tsx` — Category cards linking to /lamps, /fireplaces, /outdoor with crossfade previews
-  - `PricingCards.tsx` — Dual-mode component (display for landing page, select for wizard) with Starter/Pro/Enterprise cards
-  - `ContactCTA.tsx` — CTA section with mailto contact for enterprise enquiries
+- Created 4 marketing components in `app/components/studio/` (used on homepage):
+  - `HowItWorks.tsx` — 3-step process with custom SVG illustrations: Send Photos → AI Generates States → Embed on Your Site. Includes outcome lines and turnaround indicator.
+  - `SiteShowcase.tsx` — "Collections" category cards linking to /lamps, /fireplaces, /outdoor with crossfade previews
+  - `PricingCards.tsx` — Dual-mode component (display for homepage, select for wizard) with Starter/Pro/Enterprise cards
+  - `ContactCTA.tsx` — "Want this for your products?" CTA section with Get Started + Contact Us buttons
 - Created 6 wizard step components in `app/components/studio/wizard/`:
   - `StepIndicator.tsx` — Horizontal 4-step progress bar with checkmarks
   - `StepPackage.tsx` — Package selection using PricingCards in select mode
   - `StepDetails.tsx` — Email (with regex validation), name, brief form fields
   - `StepUpload.tsx` — Drag-and-drop image upload with thumbnails + "send later" checkbox
   - `StepReview.tsx` — Order summary with package, customer, brief, image count
-  - `StepSuccess.tsx` — Post-payment confirmation with order reference
-- Updated `app/routes/_marketing.studio.tsx` — Assembled full landing page from components
-- Updated `app/routes/studio.order.tsx` — Multi-step wizard with:
+  - `StepSuccess.tsx` — Post-payment confirmation with order reference (links back to `/`)
+- Homepage (`app/routes/_index.tsx`) — Consolidated marketing page with sections: Hero → Collections → How It Works → Pricing → CTA → Footer
+- `app/routes/studio.order.tsx` — Multi-step wizard with:
   - Client-side wizard state management (step, package, details, files)
   - Deep-linking from pricing cards via `?package=` query param
   - Client-side file upload to Supabase Storage (`order-uploads` bucket)
@@ -161,15 +160,23 @@ Built the `/studio` marketing landing page and `/studio/order` multi-step checko
   - Success page with order reference and email (preserved through Stripe redirect via URL param)
 - Updated `app/routes/api.webhooks.stripe.tsx` — Added service order handling: sets `status: "paid"` and `stripe_payment_id` on `checkout.session.completed` when `metadata.order_id` is present
 - Created `supabase/migrations/002_order_uploads_storage.sql` — Private storage bucket with anonymous upload policy (scoped to `orders/` prefix) for guest checkout
-- Created Stripe products and one-time prices via Stripe MCP:
-  - Starter: `prod_U5PHUbeRoSuKxP` / `price_1T7ETvADhNlC6kMfQ6FsCnOx` (£149)
-  - Pro: `prod_U5PHWxFCdzma3Y` / `price_1T7EU9ADhNlC6kMfFSKzNIAx` (£299)
+- Deleted standalone `/studio` landing page (`_marketing.studio.tsx`), `StudioHero.tsx`, and orphaned `_marketing.tsx` layout — all marketing content now lives on the homepage
+- Stripe products created via Stripe MCP (prices need updating to match new tiers):
+  - Starter: `prod_U5PHUbeRoSuKxP` (needs new Price at £99)
+  - Pro: `prod_U5PHWxFCdzma3Y` (needs new Price at £449)
+
+**Current pricing tiers:**
+- Starter £99 — Up to 20 images, 2 states each, delivered as files (no site integration), 48-hour delivery
+- Pro £449 — Up to 100 images, 3+ states, full website integration (requires site code access), priority support
+- Enterprise POA — Ongoing product updates, unlimited images, dedicated account manager, custom integrations, SLA
 
 **New environment variables:**
-- `STRIPE_PRICE_STARTER` — Stripe Price ID for Starter package (one-time £149)
-- `STRIPE_PRICE_PRO` — Stripe Price ID for Pro package (one-time £299)
+- `STRIPE_PRICE_STARTER` — Stripe Price ID for Starter package (needs updating to £99)
+- `STRIPE_PRICE_PRO` — Stripe Price ID for Pro package (needs updating to £449)
 
-**Verified:** Production build succeeds (156 client modules, 61 server modules). Supabase migration applied. Stripe products and prices created. Code reviewed and critical issues fixed (null URL guard, object URL memory leak, email preservation through redirect, upload error feedback, email validation).
+**TODO:** Create new Stripe Prices for £99 and £449 and update env vars.
+
+**Verified:** Production build succeeds. TypeScript passes (no new errors). Supabase migration applied. Code reviewed and critical issues fixed (null URL guard, object URL memory leak, email preservation through redirect, upload error feedback, email validation).
 
 ---
 
