@@ -7,7 +7,7 @@ export function HowItWorks() {
           How It Works
         </p>
         <h2 className="font-display text-[2.5rem] italic leading-[1.15] text-[#1C1917] sm:text-[3rem] dark:text-[#F5F0E8]">
-          Three steps to a showroom on every product page
+          Three steps to transform every product page
         </h2>
         <p className="mt-4 text-base leading-relaxed text-[#78716C] dark:text-[#A8A097]">
           No new platform to learn. No months-long integration. Your products,
@@ -30,9 +30,9 @@ export function HowItWorks() {
           {/* ── Step 2 ── */}
           <Step
             number="02"
-            title="AI generates every state"
-            description="Our models produce photorealistic alternate states for each product: lights on, lights off, day, night, seasonal. Every variant is consistent and brand-accurate."
-            outcome="Days of retouching replaced by hours of AI generation."
+            title="We create every state"
+            description="From your photos we produce photorealistic alternate states for each product: lights on, lights off, day, night, seasonal. Every variant is consistent and brand-accurate."
+            outcome="No reshoots. No retouching. Just results."
             visual={<TransformVisual />}
           />
 

@@ -20,7 +20,7 @@ export function Header({ currentSection }: HeaderProps) {
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between">
           <div className="flex items-center gap-3">
             <Link to="/" className="font-display text-xl tracking-tight text-[#1C1917] dark:text-[#F5F0E8] sm:text-[1.75rem]">
-              ILLUMINATE
+              KARLS LJUS
             </Link>
             <div className="h-5 w-px bg-border-light dark:bg-border-dark" />
             <span className="hidden text-[0.5625rem] font-medium uppercase tracking-[0.15em] text-[#78716C] dark:text-[#A8A097] sm:block">

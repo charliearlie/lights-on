@@ -37,10 +37,10 @@ export function StepPackage({
           <p className="text-sm text-[#44403C] dark:text-[#C4BAB0]">
             For enterprise enquiries, please contact us at{" "}
             <a
-              href="mailto:hello@illuminate.studio"
+              href="mailto:hello@karlsljus.studio"
               className="font-medium text-ikea-blue underline dark:text-amber-glow"
             >
-              hello@illuminate.studio
+              hello@karlsljus.studio
             </a>
           </p>
         ) : (

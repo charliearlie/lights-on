@@ -18,7 +18,7 @@ export function ContactCTA() {
             Get Started
           </Link>
           <a
-            href="mailto:hello@illuminate.studio"
+            href="mailto:hello@karlsljus.studio"
             className="rounded-full border border-white/20 px-8 py-3 text-sm font-medium uppercase tracking-[0.1em] text-white transition-colors duration-300 hover:border-white/40 hover:bg-white/5"
           >
             Contact Us

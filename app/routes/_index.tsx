@@ -38,7 +38,7 @@ export default function HomePage() {
             Nordic Home&ensp;&middot;&ensp;Since 1943
           </p>
           <h1 className="font-display text-[3rem] italic tracking-tight text-white sm:text-[4.5rem] lg:text-[6rem]">
-            ILLUMINATE
+            KARLS LJUS
           </h1>
           <HeroToggle />
         </div>

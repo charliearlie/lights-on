@@ -4,10 +4,10 @@ export function Footer() {
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col items-center justify-between gap-2 sm:flex-row">
           <p className="text-xs text-[#78716C] dark:text-[#A8A097]">
-            ILLUMINATE&ensp;&middot;&ensp;Nordic Home
+            KARLS LJUS&ensp;&middot;&ensp;Nordic Home
           </p>
           <p className="text-xs text-[#78716C] dark:text-[#A8A097]">
-            &copy; 2026&ensp;&middot;&ensp;Free delivery over &pound;75
+            &copy; 2026
           </p>
         </div>
         <p className="mt-3 text-center text-[0.6875rem] text-[#78716C]/60 dark:text-[#A8A097]/60">

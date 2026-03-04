@@ -174,7 +174,7 @@ Built the `/studio/order` multi-step checkout wizard for Channel A (productised 
 - `STRIPE_PRICE_STARTER` — Stripe Price ID for Starter package (needs updating to £99)
 - `STRIPE_PRICE_PRO` — Stripe Price ID for Pro package (needs updating to £449)
 
-**TODO:** Create new Stripe Prices for £99 and £449 and update env vars.
+**DONE:** Stripe Prices updated — Starter £99 (`price_1T7FvxADhNlC6kMfgBeESBW9`), Pro £449 (`price_1T7FvzADhNlC6kMfK2d2egwp`). Env vars updated.
 
 **Verified:** Production build succeeds. TypeScript passes (no new errors). Supabase migration applied. Code reviewed and critical issues fixed (null URL guard, object URL memory leak, email preservation through redirect, upload error feedback, email validation).
 

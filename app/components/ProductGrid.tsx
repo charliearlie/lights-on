@@ -22,7 +22,7 @@ export function ProductGrid() {
           Svensk Design&ensp;&middot;&ensp;Since 1943
         </p>
         <h2 className="font-display mt-2 text-[2rem] italic leading-[1.15] text-[#1C1917] dark:text-[#F5F0E8] sm:text-[3.5rem]">
-          Illuminate
+          Karls Ljus
         </h2>
         <p className="mt-1 text-[1.1rem] text-[#78716C] dark:text-[#A8A097]">
           Sixteen lamps. One switch.

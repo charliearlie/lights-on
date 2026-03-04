@@ -39,7 +39,7 @@ export function PricingCards({
         const handleClick = () => {
           if (mode !== "select") return;
           if (isEnterprise) {
-            window.location.href = "mailto:hello@illuminate.studio";
+            window.location.href = "mailto:hello@karlsljus.studio";
             return;
           }
           onSelect?.(pkg.id);
@@ -95,7 +95,7 @@ export function PricingCards({
                 <div className="mt-6">
                   {isEnterprise ? (
                     <a
-                      href="mailto:hello@illuminate.studio"
+                      href="mailto:hello@karlsljus.studio"
                       className="block rounded-lg border border-border-light px-4 py-2.5 text-center text-sm font-medium text-[#1C1917] transition-colors duration-300 hover:bg-[#F7F5F2] dark:border-border-dark dark:text-[#F5F0E8] dark:hover:bg-[#1A1915]"
                     >
                       Contact Us
