@@ -1,7 +1,18 @@
+import { useEffect, useState } from "react";
 import { outdoor } from "../data/outdoor";
 import { ProductCard } from "./ProductCard";
+import { getLastViewedProduct, clearLastViewedProduct } from "../hooks/useLastViewedProduct";
 
 export function OutdoorGrid() {
+  const [activeId] = useState(() => getLastViewedProduct());
+
+  useEffect(() => {
+    if (activeId !== null) {
+      const t = setTimeout(clearLastViewedProduct, 600);
+      return () => clearTimeout(t);
+    }
+  }, [activeId]);
+
   return (
     <main className="mx-auto max-w-7xl px-4 sm:px-6">
       {/* Hero section */}
@@ -20,14 +31,24 @@ export function OutdoorGrid() {
       {/* Product grid */}
       <div className="py-6 sm:py-8">
         <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-4">
-          {outdoor.map((product, index) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              index={index}
-              linkPrefix="outdoor"
-            />
-          ))}
+          {outdoor.map((product, index) => {
+            const isActive = activeId === product.id;
+            const stagger = activeId !== null && !isActive;
+            return (
+              <div
+                key={product.id}
+                className={stagger ? "product-card-wrapper" : undefined}
+                style={stagger ? ({ "--i": index } as React.CSSProperties) : undefined}
+              >
+                <ProductCard
+                  product={product}
+                  index={index}
+                  linkPrefix="outdoor"
+                  isActive={isActive}
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
     </main>

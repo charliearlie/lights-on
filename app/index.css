@@ -43,16 +43,32 @@ body {
   animation: amber-flash 700ms ease-out forwards;
 }
 
-/* ---- View Transition: shared product-image hero animation ---- */
+/* ============================================================
+   VIEW TRANSITIONS
+   ============================================================ */
 
-/* Disable default crossfade on root so only named elements animate */
+/* Root: instant swap — no crossfade keeps background solid */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
 }
 
-/* Smooth easing for all named view-transition groups (product images) */
+/* Smooth morph for hero image and all named groups */
 ::view-transition-group(*) {
   animation-duration: 400ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Prevent mid-crossfade transparency dip on hero morph */
+::view-transition-image-pair(product-hero) {
+  mix-blend-mode: plus-lighter;
+}
+
+/* Accessibility: honour reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.01ms !important;
+  }
 }

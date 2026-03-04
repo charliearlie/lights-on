@@ -81,7 +81,7 @@ export default function LampDetailPage() {
         <div className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 lg:flex lg:items-start lg:gap-16 lg:px-8">
           {/* Image — sticky on desktop */}
           <div className="w-full lg:sticky lg:top-27.5 lg:w-[52%]">
-            <div className="relative aspect-square overflow-hidden rounded-2xl bg-surface-light ring-1 ring-border-light dark:bg-surface-dark dark:ring-border-dark" style={{ viewTransitionName: `product-image-${productId}` }}>
+            <div data-vt-hero className="relative aspect-square overflow-hidden rounded-2xl bg-surface-light ring-1 ring-border-light dark:bg-surface-dark dark:ring-border-dark" style={{ viewTransitionName: "product-hero" }}>
               <img
                 src={product.imageOff}
                 alt={`${product.name} — unlit`}
@@ -104,7 +104,7 @@ export default function LampDetailPage() {
           </div>
 
           {/* Product info */}
-          <div className="w-full pt-8 lg:w-[48%] lg:pt-16">
+          <div className="w-full pt-8 lg:w-[48%] lg:pt-16" style={{ viewTransitionName: "product-info" }}>
             <p className="text-[0.625rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">
               Nordic Lighting
             </p>

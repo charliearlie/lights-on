@@ -1,21 +1,40 @@
+import { useRef } from "react";
 import { Link } from "react-router";
 import type { Product } from "../data/products";
 import { useDarkMode } from "../context/dark-mode";
+import { setLastViewedProduct } from "../hooks/useLastViewedProduct";
 
 interface ProductCardProps {
   product: Product;
   index: number;
   linkPrefix?: string;
+  isActive?: boolean;
 }
 
-export function ProductCard({ product, index, linkPrefix = "lamps" }: ProductCardProps) {
+export function ProductCard({ product, index, linkPrefix = "lamps", isActive = false }: ProductCardProps) {
   const { isDark } = useDarkMode();
+  const imageRef = useRef<HTMLDivElement>(null);
   // First row (4 cards) loads eagerly; rest are lazy
   const aboveFold = index < 4;
+
+  const handleClick = () => {
+    setLastViewedProduct(product.id);
+    if (imageRef.current) {
+      // Clear any existing product-hero (e.g. detail page hero) to avoid
+      // duplicate viewTransitionName which would break the entire transition
+      const existing = document.querySelector<HTMLElement>("[data-vt-hero]");
+      if (existing) {
+        existing.style.viewTransitionName = "";
+      }
+      // Set name imperatively so the old-state snapshot captures it
+      imageRef.current.style.viewTransitionName = "product-hero";
+    }
+  };
+
   return (
-    <Link to={`/${linkPrefix}/${product.id}`} viewTransition className="group block overflow-hidden rounded-xl border border-border-light transition-all duration-200 hover:scale-[1.015] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:border-border-dark dark:hover:shadow-[0_0_0_1px_rgba(245,158,11,0.2),0_8px_24px_rgba(245,158,11,0.08)]">
+    <Link to={`/${linkPrefix}/${product.id}`} viewTransition onClick={handleClick} className="group block overflow-hidden rounded-xl border border-border-light transition-all duration-200 hover:scale-[1.015] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:border-border-dark dark:hover:shadow-[0_0_0_1px_rgba(245,158,11,0.2),0_8px_24px_rgba(245,158,11,0.08)]">
       {/* Image area — bg matches page surface so lamp backgrounds blend */}
-      <div className="relative aspect-square overflow-hidden bg-surface-light dark:bg-surface-dark" style={{ viewTransitionName: `product-image-${product.id}` }}>
+      <div ref={imageRef} className="relative aspect-square overflow-hidden bg-surface-light dark:bg-surface-dark" style={{ viewTransitionName: isActive ? "product-hero" : undefined }}>
         <img
           src={product.thumbOff}
           alt={`${product.name} off`}

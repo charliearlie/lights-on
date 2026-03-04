@@ -69,13 +69,13 @@ export default function OutdoorDetailPage() {
 
         <div className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 lg:flex lg:items-start lg:gap-16 lg:px-8">
           <div className="w-full lg:sticky lg:top-27.5 lg:w-[52%]">
-            <div className="relative aspect-square overflow-hidden rounded-2xl bg-surface-light ring-1 ring-border-light dark:bg-surface-dark dark:ring-border-dark" style={{ viewTransitionName: `product-image-${productId}` }}>
+            <div data-vt-hero className="relative aspect-square overflow-hidden rounded-2xl bg-surface-light ring-1 ring-border-light dark:bg-surface-dark dark:ring-border-dark" style={{ viewTransitionName: "product-hero" }}>
               <img src={product.imageOff} alt={`${product.name} — unlit`} width={1024} height={1024} decoding="async" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: isDark ? 0 : 1 }} />
               <img src={product.imageOn} alt={`${product.name} — lit`} width={1024} height={1024} decoding="async" className="absolute inset-0 h-full w-full object-cover" style={{ opacity: isDark ? 1 : 0 }} />
             </div>
           </div>
 
-          <div className="w-full pt-8 lg:w-[48%] lg:pt-16">
+          <div className="w-full pt-8 lg:w-[48%] lg:pt-16" style={{ viewTransitionName: "product-info" }}>
             <p className="text-[0.625rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">Nordic Outdoor</p>
             <h1 className="font-display mt-2 text-[2.5rem] italic leading-[1.05] tracking-tight text-[#1C1917] dark:text-[#F5F0E8] sm:text-[3.5rem] lg:text-[4rem]">{product.name}</h1>
             <p className="mt-5 text-[1.0625rem] leading-relaxed text-[#44403C] dark:text-[#C4BAB0]">{product.description}.</p>
