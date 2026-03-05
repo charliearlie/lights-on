@@ -32,7 +32,7 @@ export type TransformationType =
 export interface TransformOptions {
   /** Additional prompt context */
   context?: string;
-  /** Gemini model override (default: gemini-2.5-flash-preview-image-generation) */
+  /** Gemini model override (default: gemini-3.1-flash-image-preview) */
   model?: string;
 }
 
@@ -164,7 +164,7 @@ export async function transformImage(
   const cached = cache.get(key);
   if (cached) return cached;
 
-  const model = options.model ?? "gemini-2.5-flash-preview-image-generation";
+  const model = options.model ?? "gemini-3.1-flash-image-preview";
   const promptTemplate = PROMPT_TEMPLATES[transformationType];
   const prompt = options.context
     ? `${promptTemplate}\n\nAdditional context: ${options.context}`

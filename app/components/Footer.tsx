@@ -4,14 +4,14 @@ export function Footer() {
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col items-center justify-between gap-2 sm:flex-row">
           <p className="text-xs text-[#78716C] dark:text-[#A8A097]">
-            KARLS LJUS&ensp;&middot;&ensp;Nordic Home
+            Camber AI
           </p>
           <p className="text-xs text-[#78716C] dark:text-[#A8A097]">
             &copy; 2026
           </p>
         </div>
         <p className="mt-3 text-center text-[0.6875rem] text-[#78716C]/60 dark:text-[#A8A097]/60">
-          A showcase by Charlie Waite&ensp;&middot;&ensp;Not a real store&ensp;&middot;&ensp;Product images generated with AI
+          Built by Camber AI&ensp;&middot;&ensp;Product images generated with AI
         </p>
       </div>
     </footer>

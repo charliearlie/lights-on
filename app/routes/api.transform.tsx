@@ -4,6 +4,7 @@ import {
   type TransformationType,
 } from "../services/nano-banana.server";
 import { getSupabaseAdmin } from "../services/supabase.server";
+import { createSupabaseServerClient } from "../services/supabase.ssr.server";
 
 const VALID_TYPES: TransformationType[] = [
   "lights-on",
@@ -19,25 +20,42 @@ export async function action({ request }: Route.ActionArgs) {
     return Response.json({ error: "Method not allowed" }, { status: 405 });
   }
 
-  // Check auth — expect Authorization header with Supabase JWT
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const responseHeaders = new Headers();
+  let user: { id: string; email?: string } | null = null;
+
+  // Try cookie auth first via SSR client
+  const supabaseSSR = createSupabaseServerClient(request, responseHeaders);
+  const { data: cookieAuth, error: cookieError } =
+    await supabaseSSR.auth.getUser();
+
+  if (!cookieError && cookieAuth.user) {
+    user = { id: cookieAuth.user.id, email: cookieAuth.user.email };
   }
 
-  const token = authHeader.slice(7);
-  const supabase = getSupabaseAdmin();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser(token);
+  // Fall back to Authorization header check
+  if (!user) {
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return Response.json({ error: "Unauthorized" }, { status: 401, headers: responseHeaders });
+    }
 
-  if (authError || !user) {
-    return Response.json({ error: "Invalid token" }, { status: 401 });
+    const token = authHeader.slice(7);
+    const supabase = getSupabaseAdmin();
+    const {
+      data: { user: headerUser },
+      error: authError,
+    } = await supabase.auth.getUser(token);
+
+    if (authError || !headerUser) {
+      return Response.json({ error: "Invalid token" }, { status: 401, headers: responseHeaders });
+    }
+
+    user = { id: headerUser.id, email: headerUser.email };
   }
 
-  // Check usage limits
-  const { data: profile } = await supabase
+  // Check usage limits (use admin client to bypass RLS)
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data: profile } = await supabaseAdmin
     .from("profiles")
     .select("transformations_used, transformations_limit")
     .eq("id", user.id)
@@ -85,7 +103,7 @@ export async function action({ request }: Route.ActionArgs) {
     );
 
     // Increment usage counter
-    await supabase.rpc("increment_transformations", { user_uuid: user.id });
+    await supabaseAdmin.rpc("increment_transformations", { user_uuid: user.id });
 
     return Response.json({
       imageDataUri: result.imageDataUri,

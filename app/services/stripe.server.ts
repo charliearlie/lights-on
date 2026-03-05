@@ -92,3 +92,14 @@ export function constructWebhookEvent(
   }
   return getStripe().webhooks.constructEvent(payload, signature, secret);
 }
+
+// ---------------------------------------------------------------------------
+// Billing Portal helpers
+// ---------------------------------------------------------------------------
+
+export async function createPortalSession(customerId: string, returnUrl: string) {
+  return getStripe().billingPortal.sessions.create({
+    customer: customerId,
+    return_url: returnUrl,
+  });
+}

@@ -24,14 +24,22 @@ const categories = [
   },
 ];
 
-export function SiteShowcase() {
+interface SiteShowcaseProps {
+  heading?: string;
+  subtitle?: string;
+}
+
+export function SiteShowcase({
+  heading = "Explore our collections",
+  subtitle = "Collections",
+}: SiteShowcaseProps) {
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
       <p className="mb-2 text-center text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">
-        Collections
+        {subtitle}
       </p>
       <h2 className="mb-10 text-center font-display text-[2rem] italic text-[#1C1917] dark:text-[#F5F0E8]">
-        Explore our collections
+        {heading}
       </h2>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">

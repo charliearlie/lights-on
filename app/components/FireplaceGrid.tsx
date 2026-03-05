@@ -18,7 +18,7 @@ export function FireplaceGrid() {
       {/* Hero section */}
       <section className="pb-2 pt-10 text-center sm:pb-4 sm:pt-14">
         <p className="text-[0.625rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">
-          Svensk Design&ensp;&middot;&ensp;Since 1943
+          Karls Ljus Showcase&ensp;&middot;&ensp;Powered by Camber AI
         </p>
         <h2 className="font-display mt-2 text-[2rem] italic leading-[1.15] text-[#1C1917] dark:text-[#F5F0E8] sm:text-[3.5rem]">
           Ignite

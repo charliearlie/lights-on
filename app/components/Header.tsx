@@ -3,15 +3,16 @@ import { DarkModeToggle } from "./DarkModeToggle";
 
 interface HeaderProps {
   currentSection?: "lamps" | "fireplaces" | "outdoor";
+  brand?: "camber" | "karls";
 }
 
-export function Header({ currentSection }: HeaderProps) {
+export function Header({ currentSection, brand = "karls" }: HeaderProps) {
   return (
     <header className="sticky top-0 z-10">
       {/* Announcement bar */}
       <div className="border-b border-border-light bg-white/80 px-4 py-2 text-center backdrop-blur-sm transition-colors duration-300 dark:border-border-dark dark:bg-card-dark/80">
         <p className="text-[0.625rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">
-          Free delivery on orders over £75
+          {brand === "camber" ? "AI-powered product image transformation" : "Free delivery on orders over £75"}
         </p>
       </div>
 
@@ -20,14 +21,34 @@ export function Header({ currentSection }: HeaderProps) {
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between">
           <div className="flex items-center gap-3">
             <Link to="/" className="font-display text-xl tracking-tight text-[#1C1917] dark:text-[#F5F0E8] sm:text-[1.75rem]">
-              KARLS LJUS
+              {brand === "camber" ? "CAMBER AI" : "KARLS LJUS"}
             </Link>
-            <div className="h-5 w-px bg-border-light dark:bg-border-dark" />
-            <span className="hidden text-[0.5625rem] font-medium uppercase tracking-[0.15em] text-[#78716C] dark:text-[#A8A097] sm:block">
-              Nordic Home
-            </span>
+            {brand === "karls" && (
+              <>
+                <div className="h-5 w-px bg-border-light dark:bg-border-dark" />
+                <span className="hidden text-[0.5625rem] font-medium uppercase tracking-[0.15em] text-[#78716C] dark:text-[#A8A097] sm:block">
+                  Nordic Home
+                </span>
+              </>
+            )}
           </div>
-          <DarkModeToggle />
+          <div className="flex items-center gap-5">
+            <nav className="hidden items-center gap-4 sm:flex">
+              <Link
+                to="/showcase"
+                className="text-[0.6875rem] font-medium uppercase tracking-[0.15em] text-[#78716C] transition-colors hover:text-[#1C1917] dark:text-[#A8A097] dark:hover:text-[#F5F0E8]"
+              >
+                Demo
+              </Link>
+              <Link
+                to="/app"
+                className="text-[0.6875rem] font-medium uppercase tracking-[0.15em] text-[#78716C] transition-colors hover:text-[#1C1917] dark:text-[#A8A097] dark:hover:text-[#F5F0E8]"
+              >
+                Dashboard
+              </Link>
+            </nav>
+            <DarkModeToggle />
+          </div>
         </div>
       </div>
 

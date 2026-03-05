@@ -178,6 +178,114 @@ Built the `/studio/order` multi-step checkout wizard for Channel A (productised 
 
 **Verified:** Production build succeeds. TypeScript passes (no new errors). Supabase migration applied. Code reviewed and critical issues fixed (null URL guard, object URL memory leak, email preservation through redirect, upload error feedback, email validation).
 
+### Phase 2B: Self-Serve SaaS (Channel B) — COMPLETE
+
+Built the full self-serve SaaS experience: auth, dashboard, project editor, settings/billing, and public embed route.
+
+**What was done:**
+
+- Installed `@supabase/ssr` for cookie-based session management (replacing broken Authorization header approach)
+- Created `app/services/supabase.ssr.server.ts` — SSR cookie-based Supabase client using `createServerClient` with `parseCookieHeader`/`serializeCookieHeader`
+- Updated `app/services/supabase.client.ts` — Switched from `createClient` to `createBrowserClient` from `@supabase/ssr`
+- Created `app/routes/login.tsx` — Email magic link login page with centered card UI, `useFetcher` for form submission, success/error feedback
+- Created `app/routes/auth.callback.tsx` — Loader-only route handling PKCE token exchange from magic link, redirects to `/app` on success
+- Created `app/routes/app.tsx` — Authenticated layout with cookie-based auth via `createSupabaseServerClient`, returns user + profile data for child routes (replaced old `_app.tsx` which used broken Authorization header)
+- Updated `app/routes/api.transform.tsx` — Added cookie-based auth as primary method, falls back to Authorization header for backward compatibility
+- Built `app/routes/app._index.tsx` — Full dashboard with project cards grid, usage meter, plan badge, "New Project" form, empty state
+- Created `app/components/ProjectCard.tsx` — Reusable card with thumbnail, name, image count, public/private badge, time-ago display
+- Built `app/routes/app.project.$id.tsx` — Full project editor with:
+  - Editable project name, public/private toggle, delete with confirmation
+  - Drag-and-drop image upload with transformation type selection
+  - Live `ImageToggle` preview for each image state
+  - Toggle configuration (transition type, trigger type)
+  - Copyable iframe embed code with live-updating URL params
+- Created `app/routes/api.project-upload.tsx` — Upload + transform endpoint: authenticates, checks usage limits, uploads source to Supabase Storage, calls Nano Banana AI transform, uploads result, creates image_state, increments usage counter
+- Built `app/routes/app.settings.tsx` — Settings page with:
+  - Profile section (email read-only, editable display name)
+  - Plan & usage section with progress bar
+  - Billing section: upgrade cards for free users, Stripe Customer Portal for paid users
+- Created `app/routes/embed.$projectId.tsx` — Public embed route rendering ImageToggle with zero chrome (no header/footer), supports URL params for theme/transition/trigger overrides, 404 for private/non-existent projects
+- Added `createPortalSession` helper to `app/services/stripe.server.ts`
+- Created `app/data/saas-plans.ts` — Plan definitions (Free/Pro/Business with features and limits)
+- Created `app/data/saas-plans.server.ts` — Server-side Stripe price ID resolution
+- Applied migration `003_handle_new_user_and_increment_fn` — Auto-creates profile on signup + defines the `increment_transformations` RPC function (was previously called but never defined)
+- Applied migration `004_project_images_storage` — `project-images` storage bucket with user-scoped write policies and public read
+- Created Stripe subscription products and prices:
+  - "Karls Ljus SaaS — Pro": `prod_U5qB83TZC8c2te` / `price_1T7eVXADhNlC6kMfMZIVYcv3` (£29/mo)
+  - "Karls Ljus SaaS — Business": `prod_U5qB04YCqtHdSv` / `price_1T7eVXADhNlC6kMfJ20WFJkL` (£79/mo)
+
+**SaaS pricing tiers:**
+- Free — 5 transforms/month, unlimited projects, all transition types, public embeds
+- Pro £29/mo — 100 transforms/month, unlimited projects, custom embed styling
+- Business £79/mo — 500 transforms/month, unlimited projects, priority support
+
+**New environment variables:**
+- `VITE_SUPABASE_URL` — Supabase project URL (client, Vite-prefixed)
+- `VITE_SUPABASE_PUBLISHABLE_KEY` — Supabase anon key (client, Vite-prefixed)
+- `STRIPE_PRICE_SAAS_PRO` — Stripe Price ID for Pro monthly subscription
+- `STRIPE_PRICE_SAAS_BUSINESS` — Stripe Price ID for Business monthly subscription
+
+**Route naming change:** The authenticated app routes were renamed from `_app.*` (pathless layout) to `app.*` (path-based layout at `/app`). The old `_app.tsx`, `_app.dashboard.tsx`, `_app.project.$id.tsx`, and `_app.settings.tsx` skeletons were deleted and replaced with fully-built `app.*` equivalents.
+
+**Verified:** Production build succeeds (173 client modules, 67 server modules). TypeScript clean. All server-only files use `.server.ts` suffix — no client bundle leaks.
+
+### Phase 2C: Branding Pivot & Landing Page — COMPLETE
+
+Rebranded the landing page as "Camber AI" (the platform brand) while keeping "Karls Ljus" as the demo showcase brand. Separated the product showcase into its own route.
+
+**What was done:**
+
+- Rewrote `app/routes/_index.tsx` — Landing page now branded as "Camber AI" with:
+  - Compact hero section with AI transformation messaging
+  - Live demo section linking to `/showcase` (the Karls Ljus product showcase)
+  - Two-channel CTA cards: "Do It Yourself" (SaaS → `/app`) and "We Do It For You" (Studio → `/studio/order`)
+  - How It Works section
+- Created `app/routes/showcase.tsx` — New route housing the original Karls Ljus product showcase (collections grid that previously lived on the homepage)
+- Updated `app/components/Header.tsx` — Added `brand` prop (`"camber"` | `"karls"`): controls logo text, announcement bar, and nav links. Added nav links to `/showcase` (Demo) and `/app` (Dashboard)
+- Updated branding across product grids (`ProductGrid.tsx`, `FireplaceGrid.tsx`, `OutdoorGrid.tsx`) — taglines now read "Karls Ljus Showcase · Powered by Camber AI"
+- Updated `app/components/Footer.tsx` — "Camber AI" branding
+- Updated `app/components/studio/SiteShowcase.tsx` — Made heading/subtitle configurable via props
+- Updated `app/root.tsx` — Replaced favicon with `public/favicon.png`
+- Updated `app/services/nano-banana.server.ts` — Gemini model updated to `gemini-3.1-flash-image-preview`
+
+**New routes:**
+- `/` — Camber AI landing page (marketing + two-channel CTA)
+- `/showcase` — Karls Ljus product showcase (lamps, fireplaces, outdoor collections)
+- `/login` — Email magic link login
+- `/auth/callback` — PKCE token exchange
+- `/app` — Dashboard (authenticated)
+- `/app/project/:id` — Project editor (authenticated)
+- `/app/settings` — Account & billing (authenticated)
+- `/embed/:projectId` — Public embed (zero chrome)
+
+---
+
+## What's Next
+
+### Phase 3: Polish & Launch Prep
+
+The core platform (Channel A + B) is functionally complete. Before going live:
+
+**Must do:**
+- [ ] End-to-end testing of the full SaaS flow: signup → create project → upload image → AI transform → preview toggle → copy embed → embed on external page
+- [ ] End-to-end testing of the Studio order flow: select package → fill details → upload images → pay via Stripe → confirm order
+- [ ] Verify Stripe webhooks work in production (subscription lifecycle, service order payment)
+- [ ] Verify Supabase RLS policies work correctly (users can only see/edit their own data)
+- [ ] Test the embed route renders correctly in an iframe on an external site
+- [ ] Error handling audit: what happens when AI transform fails, upload fails, Stripe fails, auth expires
+- [ ] Mobile responsiveness pass on all new pages (dashboard, project editor, settings, login)
+
+**Should do:**
+- [ ] SEO meta tags on landing page and showcase
+- [ ] Loading states and skeleton UIs for dashboard/project pages
+- [ ] Rate limiting on the transform API endpoint
+- [ ] Image size/format validation on upload
+- [ ] Toast notifications for user actions (project created, settings saved, etc.)
+
+**Deferred (Channel C & D):**
+- Shopify app (Channel C) — Separate repo, calls the same transform API
+- Agency white-label (Channel D) — RLS + theming layer on top of Channel B
+
 ---
 
 Phase 0: Upgrade to React Router v7 Framework Mode
@@ -316,7 +424,8 @@ illuminate/
 │   │   └── dark-mode.tsx                 # React context for dark mode state
 │   │
 │   ├── routes/
-│   │   ├── _index.tsx                    # Homepage — the Illuminate showcase
+│   │   ├── _index.tsx                    # Landing page — Camber AI marketing + two-channel CTA
+│   │   ├── showcase.tsx                  # Karls Ljus product showcase (collections grid)
 │   │   ├── lamps.tsx                     # Lamp product grid
 │   │   ├── lamps.$id.tsx                 # Lamp detail page
 │   │   ├── fireplaces.tsx                # Fireplace product grid
@@ -327,39 +436,62 @@ illuminate/
 │   │   ├── generate.fireplaces.tsx       # Fireplace image generator
 │   │   ├── generate.hero.tsx             # Hero image generator
 │   │   ├── generate.outdoor.tsx          # Outdoor image generator
-│   │   ├── _marketing.tsx                # Public layout (Header + Footer)
-│   │   ├── _marketing.studio.tsx         # Illuminate Studio landing (skeleton)
-│   │   ├── studio.order.tsx              # Package selection (skeleton)
-│   │   ├── _app.tsx                      # Authenticated layout (auth check in loader)
-│   │   ├── _app.dashboard.tsx            # User dashboard (skeleton)
-│   │   ├── _app.project.$id.tsx          # Project editor (skeleton)
-│   │   ├── _app.settings.tsx             # Account & billing (skeleton)
+│   │   ├── login.tsx                     # Email magic link login
+│   │   ├── auth.callback.tsx             # PKCE token exchange callback
+│   │   ├── studio.order.tsx              # Studio order wizard (Channel A checkout)
+│   │   ├── app.tsx                       # Authenticated layout (cookie-based auth)
+│   │   ├── app._index.tsx               # User dashboard (projects, usage, new project)
+│   │   ├── app.project.$id.tsx          # Project editor (upload, transform, preview, embed)
+│   │   ├── app.settings.tsx             # Account, plan, billing management
+│   │   ├── embed.$projectId.tsx         # Public embed (zero chrome, iframe-friendly)
 │   │   ├── api.webhooks.stripe.tsx       # Stripe webhook handler
-│   │   └── api.transform.tsx             # Transformation API endpoint
+│   │   ├── api.transform.tsx             # Transformation API endpoint
+│   │   └── api.project-upload.tsx        # Upload + transform endpoint
 │   │
 │   ├── components/
-│   │   ├── Header.tsx                    # Site header with dark mode toggle
-│   │   ├── Footer.tsx                    # Site footer
+│   │   ├── Header.tsx                    # Site header with brand prop (camber/karls)
+│   │   ├── Footer.tsx                    # Site footer (Camber AI branding)
 │   │   ├── DarkModeToggle.tsx            # Toggle switch component
 │   │   ├── HeroToggle.tsx                # Hero section toggle
-│   │   ├── ProductCard.tsx               # Product card with image crossfade
+│   │   ├── ProductCard.tsx               # Product card with image crossfade + view transitions
+│   │   ├── ProjectCard.tsx               # Dashboard project card
 │   │   ├── ProductGrid.tsx               # Lamp product grid
 │   │   ├── FireplaceGrid.tsx             # Fireplace product grid
 │   │   ├── OutdoorGrid.tsx               # Outdoor light grid
-│   │   └── image-toggle/
-│   │       └── ImageToggle.tsx           # Generalised multi-state toggle
+│   │   ├── image-toggle/
+│   │   │   └── ImageToggle.tsx           # Generalised multi-state toggle
+│   │   └── studio/
+│   │       ├── HowItWorks.tsx            # 3-step process illustration
+│   │       ├── SiteShowcase.tsx          # Collections category cards
+│   │       ├── PricingCards.tsx           # Starter/Pro/Enterprise pricing
+│   │       ├── ContactCTA.tsx            # CTA section
+│   │       └── wizard/
+│   │           ├── StepIndicator.tsx     # 4-step progress bar
+│   │           ├── StepPackage.tsx       # Package selection
+│   │           ├── StepDetails.tsx       # Email, name, brief form
+│   │           ├── StepUpload.tsx        # Drag-and-drop image upload
+│   │           ├── StepReview.tsx        # Order summary
+│   │           └── StepSuccess.tsx       # Post-payment confirmation
 │   │
 │   ├── services/
-│   │   ├── nano-banana.server.ts         # AI transformation engine (server-only)
-│   │   ├── stripe.server.ts              # Stripe client + helpers (server-only)
+│   │   ├── nano-banana.server.ts         # AI transformation engine (Gemini 3.1, server-only)
+│   │   ├── stripe.server.ts              # Stripe client + helpers + portal (server-only)
 │   │   ├── supabase.server.ts            # Supabase admin client (server-only)
-│   │   └── supabase.client.ts            # Supabase browser client
+│   │   ├── supabase.ssr.server.ts        # Supabase SSR cookie-based client (server-only)
+│   │   └── supabase.client.ts            # Supabase browser client (@supabase/ssr)
 │   │
 │   ├── data/
 │   │   ├── products.ts                   # 16 lamp products
 │   │   ├── fireplaces.ts                 # 16 fireplace products
 │   │   ├── outdoor.ts                    # 16 outdoor light products
-│   │   └── imageStore.ts                 # localStorage image cache
+│   │   ├── imageStore.ts                 # localStorage image cache
+│   │   ├── studio-packages.ts            # Studio package definitions (Starter/Pro/Enterprise)
+│   │   ├── studio-packages.server.ts     # Studio Stripe price resolution
+│   │   ├── saas-plans.ts                 # SaaS plan definitions (Free/Pro/Business)
+│   │   └── saas-plans.server.ts          # SaaS Stripe price resolution
+│   │
+│   ├── hooks/
+│   │   └── useLastViewedProduct.ts       # sessionStorage helper for view transitions
 │   │
 │   └── pages/                            # Generate pages (re-exported by routes)
 │       ├── Generate.tsx                  # Lamp image generator
@@ -368,11 +500,15 @@ illuminate/
 │       └── GenerateOutdoor.tsx           # Outdoor image generator
 │
 ├── public/
+│   ├── favicon.png                       # Site favicon
 │   └── images/                           # Static product images (on/off pairs)
 │
 ├── supabase/
 │   └── migrations/
-│       └── 001_initial_schema.sql        # profiles, projects, image_states, transformations, service_orders
+│       ├── 001_initial_schema.sql        # profiles, projects, image_states, transformations, service_orders
+│       ├── 002_order_uploads_storage.sql  # order-uploads storage bucket + anonymous upload policy
+│       ├── 003_handle_new_user_and_increment_fn.sql  # Auto-create profile + increment_transformations RPC
+│       └── 004_project_images_storage.sql # project-images bucket + user-scoped policies
 │
 ├── react-router.config.ts                # Framework mode config (ssr: true)
 ├── vite.config.ts                        # Vite + reactRouter + tailwind + tsconfig paths + netlify
