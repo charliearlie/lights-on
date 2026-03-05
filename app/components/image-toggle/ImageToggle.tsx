@@ -81,6 +81,24 @@ export function ImageToggle({
 
   if (states.length === 0) return null;
 
+  const switchDots =
+    triggerType === "switch" && states.length > 1 ? (
+      <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+        {states.map((state, i) => (
+          <button
+            key={state.label}
+            onClick={() => setIndex(i)}
+            aria-label={state.label}
+            className={`h-2 w-2 rounded-full transition-colors ${
+              i === currentIndex
+                ? "bg-white"
+                : "bg-white/40 hover:bg-white/60"
+            }`}
+          />
+        ))}
+      </div>
+    ) : null;
+
   // Crossfade: stack all images, toggle opacity
   if (transitionType === "crossfade") {
     return (
@@ -97,22 +115,7 @@ export function ImageToggle({
             }}
           />
         ))}
-        {triggerType === "switch" && states.length > 1 && (
-          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
-            {states.map((state, i) => (
-              <button
-                key={state.label}
-                onClick={() => setIndex(i)}
-                aria-label={state.label}
-                className={`h-2 w-2 rounded-full transition-colors ${
-                  i === currentIndex
-                    ? "bg-white"
-                    : "bg-white/40 hover:bg-white/60"
-                }`}
-              />
-            ))}
-          </div>
-        )}
+        {switchDots}
       </div>
     );
   }
@@ -138,6 +141,7 @@ export function ImageToggle({
             }}
           />
         )}
+        {switchDots}
       </div>
     );
   }
@@ -145,11 +149,12 @@ export function ImageToggle({
   // Flip: Y-axis rotation
   return (
     <div
-      className={`relative ${className}`}
+      className={`relative overflow-hidden ${className}`}
       style={{ perspective: "1000px" }}
       {...containerProps}
     >
       <div
+        className="relative h-full w-full"
         style={{
           transformStyle: "preserve-3d",
           transition: `transform ${transitionDuration}ms ease`,
@@ -159,7 +164,7 @@ export function ImageToggle({
         <img
           src={states[0].src}
           alt={states[0].alt}
-          className="h-full w-full object-cover"
+          className="relative h-full w-full object-cover"
           style={{ backfaceVisibility: "hidden" }}
         />
         {states.length > 1 && (
@@ -174,6 +179,7 @@ export function ImageToggle({
           />
         )}
       </div>
+      {switchDots}
     </div>
   );
 }
