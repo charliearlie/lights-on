@@ -260,11 +260,47 @@ Rebranded the landing page as "Camber AI" (the platform brand) while keeping "Ka
 
 ---
 
+### Phase 3: Error Handling Audit — COMPLETE
+
+Comprehensive error handling pass across all routes and API endpoints.
+
+**What was done:**
+
+- Improved root `ErrorBoundary` in `app/root.tsx` — distinguishes 404 (page not found) from 500 (server error) using `isRouteErrorResponse()`, shows human-readable message, "Try again" button, and "Go home" link
+- Added route-level `ErrorBoundary` to `app/routes/app.tsx` — catches errors in any `/app/*` child route, renders error within the app shell (Header + Footer still visible) instead of full-page root error
+- Created `app/components/ErrorBanner.tsx` — reusable error banner with optional dismiss button, replaced duplicated inline red banner markup across 4 route files
+- Replaced inline error banners with `<ErrorBanner>` in: `app._index.tsx`, `app.project.$id.tsx`, `login.tsx`, `studio.order.tsx`
+- Wrapped unhandled Stripe calls in try/catch:
+  - `app/routes/app.settings.tsx` — `createCustomer()`, `createCheckoutSession()`, `createPortalSession()` now return user-friendly error messages instead of crashing
+  - `app/routes/studio.order.tsx` — `createCustomer()`, `createCheckoutSession()` wrapped; `JSON.parse(uploadedPaths)` wrapped with fallback to empty array
+- Added error checking to all 5 fire-and-forget Supabase writes in `app/routes/api.webhooks.stripe.tsx` — each now checks `{ error }` and logs on failure (webhooks must return 200, so logging is the appropriate response)
+- Surfaced loader query errors in dashboard and settings:
+  - `app/routes/app._index.tsx` — projects query failure now returns `loaderError` in response data, displayed as `<ErrorBanner>` above the project grid
+  - `app/routes/app.settings.tsx` — profile query failure surfaces same way
+- Validated usage counter RPC calls:
+  - `app/routes/api.transform.tsx` — `increment_transformations` RPC result now checked and logged on error
+  - `app/routes/api.project-upload.tsx` — same treatment
+
+**Files modified (11):**
+- `app/root.tsx` — Improved ErrorBoundary
+- `app/routes/app.tsx` — Route-level ErrorBoundary
+- `app/components/ErrorBanner.tsx` — New shared component
+- `app/routes/app._index.tsx` — ErrorBanner + loader error surfacing
+- `app/routes/app.project.$id.tsx` — ErrorBanner
+- `app/routes/app.settings.tsx` — ErrorBanner + Stripe try/catch + loader error surfacing
+- `app/routes/studio.order.tsx` — ErrorBanner + Stripe try/catch + JSON.parse safety
+- `app/routes/login.tsx` — ErrorBanner
+- `app/routes/api.webhooks.stripe.tsx` — DB write error logging
+- `app/routes/api.transform.tsx` — RPC error checking
+- `app/routes/api.project-upload.tsx` — RPC error checking
+
+---
+
 ## What's Next
 
-### Phase 3: Polish & Launch Prep
+### Phase 4: Polish & Launch Prep
 
-The core platform (Channel A + B) is functionally complete. Before going live:
+The core platform (Channel A + B) is functionally complete with error handling in place. Before going live:
 
 **Must do:**
 - [ ] End-to-end testing of the full SaaS flow: signup → create project → upload image → AI transform → preview toggle → copy embed → embed on external page
@@ -272,7 +308,6 @@ The core platform (Channel A + B) is functionally complete. Before going live:
 - [ ] Verify Stripe webhooks work in production (subscription lifecycle, service order payment)
 - [ ] Verify Supabase RLS policies work correctly (users can only see/edit their own data)
 - [ ] Test the embed route renders correctly in an iframe on an external site
-- [ ] Error handling audit: what happens when AI transform fails, upload fails, Stripe fails, auth expires
 - [ ] Mobile responsiveness pass on all new pages (dashboard, project editor, settings, login)
 
 **Should do:**
@@ -454,6 +489,7 @@ illuminate/
 │   │   ├── DarkModeToggle.tsx            # Toggle switch component
 │   │   ├── HeroToggle.tsx                # Hero section toggle
 │   │   ├── ProductCard.tsx               # Product card with image crossfade + view transitions
+│   │   ├── ErrorBanner.tsx               # Shared error banner (red, dismissable)
 │   │   ├── ProjectCard.tsx               # Dashboard project card
 │   │   ├── ProductGrid.tsx               # Lamp product grid
 │   │   ├── FireplaceGrid.tsx             # Fireplace product grid

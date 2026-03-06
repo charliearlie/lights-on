@@ -1,8 +1,18 @@
 import { redirect, useFetcher, useSearchParams } from "react-router";
 import type { Route } from "./+types/login";
+import type { MetaFunction } from "react-router";
 import { createSupabaseServerClient } from "../services/supabase.ssr.server";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
+import { ErrorBanner } from "../components/ErrorBanner";
+
+export const meta: MetaFunction = () => [
+  { title: "Sign In — Camber AI" },
+  { name: "description", content: "Sign in to your Camber AI account to manage your product image transformations." },
+  { property: "og:title", content: "Sign In — Camber AI" },
+  { property: "og:type", content: "website" },
+  { name: "twitter:card", content: "summary" },
+];
 
 // ---------------------------------------------------------------------------
 // Loader — redirect to /app if already authenticated
@@ -72,7 +82,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-surface-light transition-colors duration-300 dark:bg-surface-dark">
-      <Header />
+      <Header brand="camber" />
       <main className="mx-auto flex max-w-md flex-col items-center px-4 py-24 sm:px-6">
         <p className="mb-2 text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">
           Sign in
@@ -86,15 +96,15 @@ export default function LoginPage() {
 
         {/* Invalid link error from callback redirect */}
         {linkError === "invalid_link" && (
-          <div className="mt-6 w-full rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
-            The magic link is invalid or has expired. Please try again.
+          <div className="mt-6 w-full">
+            <ErrorBanner message="The magic link is invalid or has expired. Please try again." />
           </div>
         )}
 
         {/* Action error */}
         {data?.error && (
-          <div className="mt-6 w-full rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
-            {data.error}
+          <div className="mt-6 w-full">
+            <ErrorBanner message={data.error} />
           </div>
         )}
 

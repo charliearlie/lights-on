@@ -10,6 +10,7 @@ import {
   type TransitionType,
   type TriggerType,
 } from "../components/image-toggle/ImageToggle";
+import { ErrorBanner } from "../components/ErrorBanner";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -550,8 +551,8 @@ function UploadSection({ projectId }: { projectId: string }) {
 
       {/* Error banner */}
       {fetcherData?.error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
-          {fetcherData.error}
+        <div className="mb-4">
+          <ErrorBanner message={fetcherData.error} />
         </div>
       )}
 

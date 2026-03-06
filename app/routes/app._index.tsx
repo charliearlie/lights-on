@@ -3,6 +3,7 @@ import { Link, redirect, useFetcher, useLoaderData, useRouteLoaderData } from "r
 import type { Route } from "./+types/app._index";
 import { createSupabaseServerClient } from "../services/supabase.ssr.server";
 import { ProjectCard } from "../components/ProjectCard";
+import { ErrorBanner } from "../components/ErrorBanner";
 import { saasPlans } from "../data/saas-plans";
 
 // ---------------------------------------------------------------------------
@@ -20,7 +21,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     throw redirect("/login", { headers: responseHeaders });
   }
 
-  const { data: projects } = await supabase
+  const { data: projects, error: projectsError } = await supabase
     .from("projects")
     .select(
       "id, name, slug, is_public, created_at, updated_at, image_states(id, states)",
@@ -29,7 +30,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     .order("updated_at", { ascending: false });
 
   return Response.json(
-    { projects: projects ?? [] },
+    {
+      projects: projects ?? [],
+      ...(projectsError ? { loaderError: "Could not load projects. Please try again." } : {}),
+    },
     { headers: responseHeaders },
   );
 }
@@ -77,7 +81,7 @@ export async function action({ request }: Route.ActionArgs) {
 // ---------------------------------------------------------------------------
 
 export default function DashboardPage() {
-  const { projects } = useLoaderData<typeof loader>();
+  const { projects, loaderError } = useLoaderData<typeof loader>();
   const appData = useRouteLoaderData("routes/app") as {
     user: { id: string; email: string };
     profile: {
@@ -101,6 +105,11 @@ export default function DashboardPage() {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+      {loaderError && (
+        <div className="mb-6">
+          <ErrorBanner message={loaderError} />
+        </div>
+      )}
       {/* ----------------------------------------------------------------- */}
       {/* Page header                                                       */}
       {/* ----------------------------------------------------------------- */}
@@ -164,8 +173,8 @@ export default function DashboardPage() {
         {fetcher.data &&
           typeof fetcher.data === "object" &&
           "error" in (fetcher.data as Record<string, unknown>) && (
-            <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
-              {(fetcher.data as { error: string }).error}
+            <div className="mt-3">
+              <ErrorBanner message={(fetcher.data as { error: string }).error} />
             </div>
           )}
       </div>

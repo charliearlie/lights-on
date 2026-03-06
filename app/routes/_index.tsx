@@ -1,9 +1,27 @@
 import { Link } from "react-router";
+import type { MetaFunction } from "react-router";
 import { Header } from "../components/Header";
 import { HeroToggle } from "../components/HeroToggle";
 import { Footer } from "../components/Footer";
 import { SiteShowcase } from "../components/studio/SiteShowcase";
 import { HowItWorks } from "../components/studio/HowItWorks";
+
+export const meta: MetaFunction = () => [
+  { title: "Camber AI — AI-Powered Product Image Transformation" },
+  {
+    name: "description",
+    content:
+      "Transform your product photography with AI. Show customers what your products look like lit up, switched on, or in use.",
+  },
+  { property: "og:title", content: "Camber AI — AI-Powered Product Image Transformation" },
+  {
+    property: "og:description",
+    content:
+      "Transform your product photography with AI. Show customers what your products look like lit up, switched on, or in use.",
+  },
+  { property: "og:type", content: "website" },
+  { name: "twitter:card", content: "summary_large_image" },
+];
 
 export default function LandingPage() {
   return (

@@ -192,9 +192,10 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     // Increment usage
-    await adminSupabase.rpc("increment_transformations", {
+    const { error: rpcError } = await adminSupabase.rpc("increment_transformations", {
       user_uuid: user.id,
     });
+    if (rpcError) console.error("Failed to increment transformations:", rpcError);
 
     // Log transformation
     await adminSupabase.from("transformations").insert({

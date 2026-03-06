@@ -30,24 +30,26 @@ export async function action({ request }: Route.ActionArgs) {
       const session = event.data.object;
       const userId = session.metadata?.user_id;
       if (userId && session.subscription) {
-        await supabase
+        const { error } = await supabase
           .from("profiles")
           .update({
             stripe_customer_id: session.customer as string,
           })
           .eq("id", userId);
+        if (error) console.error("Webhook: failed to update stripe_customer_id", error);
       }
 
       // Service order handling
       const orderId = session.metadata?.order_id;
       if (orderId) {
-        await supabase
+        const { error } = await supabase
           .from("service_orders")
           .update({
             stripe_payment_id: session.payment_intent as string,
             status: "paid",
           })
           .eq("id", orderId);
+        if (error) console.error("Webhook: failed to update service_order", error);
       }
       break;
     }
@@ -67,7 +69,7 @@ export async function action({ request }: Route.ActionArgs) {
         business: 500,
       };
 
-      await supabase
+      const { error: subError } = await supabase
         .from("profiles")
         .update({
           plan,
@@ -77,6 +79,7 @@ export async function action({ request }: Route.ActionArgs) {
           ).toISOString(),
         })
         .eq("stripe_customer_id", customerId);
+      if (subError) console.error("Webhook: failed to update subscription profile", subError);
       break;
     }
 
@@ -87,13 +90,14 @@ export async function action({ request }: Route.ActionArgs) {
           ? subscription.customer
           : subscription.customer;
 
-      await supabase
+      const { error: delError } = await supabase
         .from("profiles")
         .update({
           plan: "free",
           transformations_limit: 5,
         })
         .eq("stripe_customer_id", customerId);
+      if (delError) console.error("Webhook: failed to downgrade subscription", delError);
       break;
     }
 
@@ -106,10 +110,11 @@ export async function action({ request }: Route.ActionArgs) {
             : invoice.customer;
 
         // Reset usage counter at the start of each billing period
-        await supabase
+        const { error: resetError } = await supabase
           .from("profiles")
           .update({ transformations_used: 0 })
           .eq("stripe_customer_id", customerId);
+        if (resetError) console.error("Webhook: failed to reset usage counter", resetError);
       }
       break;
     }

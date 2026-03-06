@@ -1,8 +1,26 @@
 import { Link } from "react-router";
+import type { MetaFunction } from "react-router";
 import { Header } from "../components/Header";
 import { HeroToggle } from "../components/HeroToggle";
 import { Footer } from "../components/Footer";
 import { SiteShowcase } from "../components/studio/SiteShowcase";
+
+export const meta: MetaFunction = () => [
+  { title: "Karls Ljus Showcase — Powered by Camber AI" },
+  {
+    name: "description",
+    content:
+      "Browse the Karls Ljus Nordic home collection. Toggle lights on and off to see lamps, fireplaces, and outdoor lighting come alive.",
+  },
+  { property: "og:title", content: "Karls Ljus Showcase — Powered by Camber AI" },
+  {
+    property: "og:description",
+    content:
+      "Browse the Karls Ljus Nordic home collection with interactive lighting toggles.",
+  },
+  { property: "og:type", content: "website" },
+  { name: "twitter:card", content: "summary_large_image" },
+];
 
 export default function ShowcasePage() {
   return (

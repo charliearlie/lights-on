@@ -103,7 +103,8 @@ export async function action({ request }: Route.ActionArgs) {
     );
 
     // Increment usage counter
-    await supabaseAdmin.rpc("increment_transformations", { user_uuid: user.id });
+    const { error: rpcError } = await supabaseAdmin.rpc("increment_transformations", { user_uuid: user.id });
+    if (rpcError) console.error("Failed to increment transformations:", rpcError);
 
     return Response.json({
       imageDataUri: result.imageDataUri,

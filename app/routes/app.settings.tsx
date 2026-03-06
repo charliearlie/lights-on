@@ -9,6 +9,7 @@ import {
   createCheckoutSession,
   createPortalSession,
 } from "../services/stripe.server";
+import { ErrorBanner } from "../components/ErrorBanner";
 
 // ---------------------------------------------------------------------------
 // Loader
@@ -25,14 +26,18 @@ export async function loader({ request }: Route.LoaderArgs) {
     throw redirect("/login", { headers: responseHeaders });
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single();
 
   return Response.json(
-    { profile, email: user.email },
+    {
+      profile,
+      email: user.email,
+      ...(profileError ? { loaderError: "Could not load profile. Please try again." } : {}),
+    },
     { headers: responseHeaders },
   );
 }
@@ -89,36 +94,44 @@ export async function action({ request }: Route.ActionArgs) {
 
     let stripeCustomerId = profile?.stripe_customer_id as string | null;
 
-    if (!stripeCustomerId) {
-      const customer = await createCustomer({
-        email: user.email!,
-        metadata: { user_id: user.id },
+    try {
+      if (!stripeCustomerId) {
+        const customer = await createCustomer({
+          email: user.email!,
+          metadata: { user_id: user.id },
+        });
+        stripeCustomerId = customer.id;
+
+        await admin
+          .from("profiles")
+          .update({ stripe_customer_id: stripeCustomerId })
+          .eq("id", user.id);
+      }
+
+      const session = await createCheckoutSession({
+        customerId: stripeCustomerId,
+        priceId,
+        mode: "subscription",
+        successUrl: origin + "/app/settings?upgraded=true",
+        cancelUrl: origin + "/app/settings?cancelled=true",
+        metadata: { user_id: user.id, plan: planId },
       });
-      stripeCustomerId = customer.id;
 
-      await admin
-        .from("profiles")
-        .update({ stripe_customer_id: stripeCustomerId })
-        .eq("id", user.id);
-    }
+      if (!session.url) {
+        return Response.json(
+          { error: "Stripe checkout session did not return a redirect URL." },
+          { status: 500, headers: responseHeaders },
+        );
+      }
 
-    const session = await createCheckoutSession({
-      customerId: stripeCustomerId,
-      priceId,
-      mode: "subscription",
-      successUrl: origin + "/app/settings?upgraded=true",
-      cancelUrl: origin + "/app/settings?cancelled=true",
-      metadata: { user_id: user.id, plan: planId },
-    });
-
-    if (!session.url) {
+      return redirect(session.url, { headers: responseHeaders });
+    } catch (e) {
+      console.error("Stripe checkout error:", e);
       return Response.json(
-        { error: "Stripe checkout session did not return a redirect URL." },
+        { error: "Payment service error. Please try again." },
         { status: 500, headers: responseHeaders },
       );
     }
-
-    return redirect(session.url, { headers: responseHeaders });
   }
 
   // --- Create Stripe Customer Portal session ---
@@ -139,12 +152,20 @@ export async function action({ request }: Route.ActionArgs) {
       );
     }
 
-    const portalSession = await createPortalSession(
-      stripeCustomerId,
-      origin + "/app/settings",
-    );
+    try {
+      const portalSession = await createPortalSession(
+        stripeCustomerId,
+        origin + "/app/settings",
+      );
 
-    return redirect(portalSession.url, { headers: responseHeaders });
+      return redirect(portalSession.url, { headers: responseHeaders });
+    } catch (e) {
+      console.error("Stripe portal error:", e);
+      return Response.json(
+        { error: "Could not open billing portal. Please try again." },
+        { status: 500, headers: responseHeaders },
+      );
+    }
   }
 
   return Response.json(
@@ -158,7 +179,7 @@ export async function action({ request }: Route.ActionArgs) {
 // ---------------------------------------------------------------------------
 
 export default function SettingsPage({ loaderData }: Route.ComponentProps) {
-  const { profile, email } = loaderData;
+  const { profile, email, loaderError } = loaderData;
   const [searchParams] = useSearchParams();
   const upgraded = searchParams.get("upgraded") === "true";
   const cancelled = searchParams.get("cancelled") === "true";
@@ -190,6 +211,13 @@ export default function SettingsPage({ loaderData }: Route.ComponentProps) {
       <h1 className="font-display text-3xl italic text-[#1C1917] dark:text-[#F5F0E8]">
         Account &amp; Billing
       </h1>
+
+      {/* Loader error banner */}
+      {loaderError && (
+        <div className="mb-6">
+          <ErrorBanner message={loaderError} />
+        </div>
+      )}
 
       {/* Upgraded banner */}
       {upgraded && (

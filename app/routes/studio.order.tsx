@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
 import { redirect, useFetcher, useSearchParams } from "react-router";
 import type { Route } from "./+types/studio.order";
+import type { MetaFunction } from "react-router";
 import { Header } from "../components/Header";
+
+export const meta: MetaFunction = () => [
+  { title: "Studio Order — Camber AI" },
+  { name: "description", content: "Order AI-powered product image transformations. Upload your photos and receive interactive showcase pages." },
+  { property: "og:title", content: "Studio Order — Camber AI" },
+  { property: "og:description", content: "Order AI-powered product image transformations from Camber AI." },
+  { property: "og:type", content: "website" },
+  { name: "twitter:card", content: "summary" },
+];
 import { Footer } from "../components/Footer";
 import { studioPackages } from "../data/studio-packages";
 import { getPackageWithPriceId } from "../data/studio-packages.server";
@@ -17,6 +27,7 @@ import { StepDetails } from "../components/studio/wizard/StepDetails";
 import { StepUpload } from "../components/studio/wizard/StepUpload";
 import { StepReview } from "../components/studio/wizard/StepReview";
 import { StepSuccess } from "../components/studio/wizard/StepSuccess";
+import { ErrorBanner } from "../components/ErrorBanner";
 
 // ---------------------------------------------------------------------------
 // Server action
@@ -29,9 +40,14 @@ export async function action({ request }: Route.ActionArgs) {
   const name = formData.get("name") as string;
   const brief = formData.get("brief") as string;
   const sendLater = formData.get("sendLater") === "true";
-  const uploadedPaths = JSON.parse(
-    (formData.get("uploadedPaths") as string) || "[]",
-  );
+  let uploadedPaths: string[];
+  try {
+    uploadedPaths = JSON.parse(
+      (formData.get("uploadedPaths") as string) || "[]",
+    );
+  } catch {
+    uploadedPaths = [];
+  }
 
   // Validate
   if (!packageId || !email || !name) {
@@ -64,21 +80,26 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   // Create Stripe customer + checkout session
-  const customer = await createCustomer({ email, name });
-  const origin = new URL(request.url).origin;
-  const session = await createCheckoutSession({
-    customerId: customer.id,
-    priceId: pkg.resolvedPriceId,
-    mode: "payment",
-    successUrl: `${origin}/studio/order?success=true&order=${order.id}&email=${encodeURIComponent(email)}`,
-    cancelUrl: `${origin}/studio/order?cancelled=true`,
-    metadata: { order_id: order.id },
-  });
+  try {
+    const customer = await createCustomer({ email, name });
+    const origin = new URL(request.url).origin;
+    const session = await createCheckoutSession({
+      customerId: customer.id,
+      priceId: pkg.resolvedPriceId,
+      mode: "payment",
+      successUrl: `${origin}/studio/order?success=true&order=${order.id}&email=${encodeURIComponent(email)}`,
+      cancelUrl: `${origin}/studio/order?cancelled=true`,
+      metadata: { order_id: order.id },
+    });
 
-  if (!session.url) {
-    return { error: "Stripe checkout session did not return a redirect URL." };
+    if (!session.url) {
+      return { error: "Stripe checkout session did not return a redirect URL." };
+    }
+    return redirect(session.url);
+  } catch (e) {
+    console.error("Stripe checkout error:", e);
+    return { error: "Payment service error. Please try again." };
   }
-  return redirect(session.url);
 }
 
 // ---------------------------------------------------------------------------
@@ -176,7 +197,7 @@ export default function StudioOrderPage() {
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-surface-light transition-colors duration-300 dark:bg-surface-dark">
-        <Header />
+        <Header brand="camber" />
         <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
           <StepSuccess orderId={orderIdParam} email={searchParams.get("email") || state.email} />
         </main>
@@ -187,7 +208,7 @@ export default function StudioOrderPage() {
 
   return (
     <div className="min-h-screen bg-surface-light transition-colors duration-300 dark:bg-surface-dark">
-      <Header />
+      <Header brand="camber" />
       <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
         {/* Step indicator */}
         <div className="mb-12">
@@ -196,22 +217,22 @@ export default function StudioOrderPage() {
 
         {/* Cancelled banner */}
         {isCancelled && step === 4 && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
-            Payment was cancelled. Please try again.
+          <div className="mb-6">
+            <ErrorBanner message="Payment was cancelled. Please try again." />
           </div>
         )}
 
         {/* Upload error banner */}
         {uploadError && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
-            {uploadError}
+          <div className="mb-6">
+            <ErrorBanner message={uploadError} />
           </div>
         )}
 
         {/* Action error banner */}
         {fetcher.data && "error" in fetcher.data && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
-            {fetcher.data.error}
+          <div className="mb-6">
+            <ErrorBanner message={fetcher.data.error as string} />
           </div>
         )}
 
