@@ -12,7 +12,12 @@ function ai(): GoogleGenAI {
   if (!_ai) {
     const key = process.env.NANO_BANANA_API_KEY;
     if (!key) throw new Error("NANO_BANANA_API_KEY is not set");
-    _ai = new GoogleGenAI({ apiKey: key });
+    _ai = new GoogleGenAI({
+      apiKey: key,
+      httpOptions: {
+        baseUrl: "https://generativelanguage.googleapis.com",
+      },
+    });
   }
   return _ai;
 }
