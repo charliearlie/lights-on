@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import path from "path";
+import { fileURLToPath } from "url";
 import {
   createTestUser,
   authenticateContext,
@@ -15,6 +16,9 @@ import {
   TEST_USER_PASSWORD,
   TEST_PROJECT_NAME,
 } from "../helpers/test-data";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Use a unique email to avoid collisions with other test suites
 const SAAS_USER_EMAIL = `saas-flow-${Date.now()}@camber-test.local`;
@@ -75,7 +79,7 @@ test.describe("SaaS flow", () => {
     await expect(page.getByText("Embed Preview")).toBeVisible();
 
     // Should show private by default
-    await expect(page.getByText("Private")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Private" })).toBeVisible();
 
     await context.close();
   });
@@ -110,10 +114,8 @@ test.describe("SaaS flow", () => {
       await expect(page.getByText("Test Product")).toBeVisible();
 
       // The on/off toggle button should be visible (shows "Off" or "On")
-      const toggleButton = page.locator("button", {
-        has: page.locator("text=Off"),
-      });
-      await expect(toggleButton.or(page.locator("button", { has: page.locator("text=On") }))).toBeVisible();
+      const toggleButton = page.getByRole("button", { name: /^(Off|On)$/ });
+      await expect(toggleButton).toBeVisible();
 
       await context.close();
     });
@@ -221,14 +223,14 @@ test.describe("SaaS flow", () => {
       await page.goto(`/app/project/${privateProject.id}`);
       await page.waitForURL(`/app/project/${privateProject.id}`);
 
-      // Should start as Private
-      await expect(page.getByText("Private")).toBeVisible();
+      // Should start as Private (use exact match to avoid matching project name button)
+      await expect(page.getByRole("button", { name: "Private", exact: true })).toBeVisible();
 
       // Click the public/private toggle button
-      await page.getByRole("button", { name: "Private" }).click();
+      await page.getByRole("button", { name: "Private", exact: true }).click();
 
       // Should now show "Public"
-      await expect(page.getByText("Public")).toBeVisible({ timeout: 5000 });
+      await expect(page.getByRole("button", { name: "Public", exact: true })).toBeVisible({ timeout: 5000 });
 
       await context.close();
     });

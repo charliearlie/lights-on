@@ -1,6 +1,6 @@
 import crypto from "crypto";
 
-const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!;
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 
 /**
  * Signs a Stripe webhook payload with the webhook secret.

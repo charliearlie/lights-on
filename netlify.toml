@@ -1,3 +1,4 @@
+# No catch-all redirect needed: @netlify/vite-plugin-react-router handles SSR routing.
 [build]
   command = "react-router build"
   publish = "build/client"

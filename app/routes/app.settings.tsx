@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { redirect, useFetcher, useSearchParams } from "react-router";
 import type { Route } from "./+types/app.settings";
 import { createSupabaseServerClient } from "../services/supabase.ssr.server";
@@ -10,6 +11,7 @@ import {
   createPortalSession,
 } from "../services/stripe.server";
 import { ErrorBanner } from "../components/ErrorBanner";
+import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
 // Loader
@@ -193,6 +195,12 @@ export default function SettingsPage({ loaderData }: Route.ComponentProps) {
     | undefined;
   const profileSaving = profileFetcher.state !== "idle";
 
+  // Toast on profile update
+  useEffect(() => {
+    if (profileData?.success) toast.success("Profile updated");
+    if (profileData?.error) toast.error(profileData.error);
+  }, [profileData]);
+
   const currentPlan = saasPlans.find((p) => p.id === profile?.plan) ??
     saasPlans[0];
   const isPaid = currentPlan.id !== "free";
@@ -280,12 +288,7 @@ export default function SettingsPage({ loaderData }: Route.ComponentProps) {
             </div>
           </profileFetcher.Form>
 
-          {/* Success / error feedback */}
-          {profileData?.success && (
-            <p className="text-sm text-green-600 dark:text-green-400">
-              Profile updated.
-            </p>
-          )}
+          {/* Error feedback (success shown via toast) */}
           {profileData?.error && (
             <p className="text-sm text-red-600 dark:text-red-400">
               {profileData.error}

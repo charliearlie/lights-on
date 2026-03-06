@@ -1,10 +1,12 @@
-import { useRef } from "react";
-import { Link, redirect, useFetcher, useLoaderData, useRouteLoaderData } from "react-router";
+import { useRef, useEffect } from "react";
+import { Link, redirect, useFetcher, useLoaderData, useNavigation, useRouteLoaderData } from "react-router";
 import type { Route } from "./+types/app._index";
 import { createSupabaseServerClient } from "../services/supabase.ssr.server";
 import { ProjectCard } from "../components/ProjectCard";
 import { ErrorBanner } from "../components/ErrorBanner";
+import { SkeletonProjectCard } from "../components/Skeleton";
 import { saasPlans } from "../data/saas-plans";
+import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
 // Loader — fetch user projects
@@ -100,8 +102,18 @@ export default function DashboardPage() {
   const pct = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
 
   const fetcher = useFetcher();
+  const navigation = useNavigation();
   const isCreating = fetcher.state !== "idle";
+  const isLoading = navigation.state === "loading";
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  // Toast on action error
+  const fetcherData = fetcher.data as { error?: string } | undefined;
+  useEffect(() => {
+    if (fetcherData?.error) {
+      toast.error(fetcherData.error);
+    }
+  }, [fetcherData]);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
@@ -169,12 +181,10 @@ export default function DashboardPage() {
           </button>
         </fetcher.Form>
 
-        {/* Action error */}
-        {fetcher.data &&
-          typeof fetcher.data === "object" &&
-          "error" in (fetcher.data as Record<string, unknown>) && (
+        {/* Action error (also shown as toast) */}
+        {fetcherData?.error && (
             <div className="mt-3">
-              <ErrorBanner message={(fetcher.data as { error: string }).error} />
+              <ErrorBanner message={fetcherData.error} />
             </div>
           )}
       </div>
@@ -182,7 +192,13 @@ export default function DashboardPage() {
       {/* ----------------------------------------------------------------- */}
       {/* Project grid / empty state                                        */}
       {/* ----------------------------------------------------------------- */}
-      {projects.length > 0 ? (
+      {isLoading ? (
+        <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <SkeletonProjectCard key={i} />
+          ))}
+        </div>
+      ) : projects.length > 0 ? (
         <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project: any) => (
             <ProjectCard key={project.id} project={project} />

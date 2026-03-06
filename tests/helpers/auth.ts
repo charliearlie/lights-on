@@ -18,6 +18,54 @@ export async function createTestUser(email: string, password: string) {
     password,
     email_confirm: true,
   });
+
+  // If user already exists from a previous failed run, look them up
+  if (error && error.message.includes("already been registered")) {
+    const { data: list } = await supabaseAdmin.auth.admin.listUsers();
+    const existing = list?.users?.find((u) => u.email === email);
+    if (!existing) throw error;
+
+    await supabaseAdmin.from("profiles").upsert({
+      id: existing.id,
+      display_name: "Test User",
+      plan: "free",
+      transformations_used: 0,
+      transformations_limit: 5,
+    });
+
+    return existing;
+  }
+
+  // "Database error creating new user" can happen when a DB trigger fails
+  // (e.g. stale profile row). Clean up and retry once.
+  if (error && error.message.includes("Database error")) {
+    // Try to find and delete the partially-created user
+    const { data: list } = await supabaseAdmin.auth.admin.listUsers();
+    const existing = list?.users?.find((u) => u.email === email);
+    if (existing) {
+      await deleteTestUser(existing.id);
+    }
+
+    // Retry creation
+    const { data: retryData, error: retryError } =
+      await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      });
+    if (retryError) throw retryError;
+
+    await supabaseAdmin.from("profiles").upsert({
+      id: retryData.user.id,
+      display_name: "Test User",
+      plan: "free",
+      transformations_used: 0,
+      transformations_limit: 5,
+    });
+
+    return retryData.user;
+  }
+
   if (error) throw error;
 
   // Ensure profile row exists
@@ -82,21 +130,26 @@ export async function authenticateContext(
 }
 
 export async function deleteTestUser(userId: string) {
-  await supabaseAdmin.from("transformations").delete().eq("user_id", userId);
-  await supabaseAdmin.from("service_orders").delete().eq("user_id", userId);
-  const { data: projects } = await supabaseAdmin
-    .from("projects")
-    .select("id")
-    .eq("user_id", userId);
-  if (projects) {
-    for (const project of projects) {
-      await supabaseAdmin
-        .from("image_states")
-        .delete()
-        .eq("project_id", project.id);
+  if (!userId) return;
+  try {
+    await supabaseAdmin.from("transformations").delete().eq("user_id", userId);
+    await supabaseAdmin.from("service_orders").delete().eq("user_id", userId);
+    const { data: projects } = await supabaseAdmin
+      .from("projects")
+      .select("id")
+      .eq("user_id", userId);
+    if (projects) {
+      for (const project of projects) {
+        await supabaseAdmin
+          .from("image_states")
+          .delete()
+          .eq("project_id", project.id);
+      }
     }
+    await supabaseAdmin.from("projects").delete().eq("user_id", userId);
+    await supabaseAdmin.from("profiles").delete().eq("id", userId);
+    await supabaseAdmin.auth.admin.deleteUser(userId);
+  } catch {
+    // Best-effort cleanup — don't fail tests on teardown errors
   }
-  await supabaseAdmin.from("projects").delete().eq("user_id", userId);
-  await supabaseAdmin.from("profiles").delete().eq("id", userId);
-  await supabaseAdmin.auth.admin.deleteUser(userId);
 }

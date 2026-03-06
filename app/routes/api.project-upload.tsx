@@ -5,6 +5,7 @@ import {
   transformImage,
   type TransformationType,
 } from "../services/nano-banana.server";
+import { checkRateLimit } from "../services/rate-limiter.server";
 
 // ---------------------------------------------------------------------------
 // Valid transformation types
@@ -35,6 +36,22 @@ export async function action({ request }: Route.ActionArgs) {
     return Response.json(
       { error: "Unauthorized" },
       { status: 401, headers: responseHeaders },
+    );
+  }
+
+  // Rate limit check (per-user, 10 requests/minute)
+  const rateLimit = checkRateLimit(user.id);
+  if (!rateLimit.allowed) {
+    return new Response(
+      JSON.stringify({ error: "Too many requests. Please slow down." }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": String(rateLimit.retryAfterSeconds),
+          ...Object.fromEntries(responseHeaders.entries()),
+        },
+      },
     );
   }
 

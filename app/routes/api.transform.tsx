@@ -5,6 +5,7 @@ import {
 } from "../services/nano-banana.server";
 import { getSupabaseAdmin } from "../services/supabase.server";
 import { createSupabaseServerClient } from "../services/supabase.ssr.server";
+import { checkRateLimit } from "../services/rate-limiter.server";
 
 const VALID_TYPES: TransformationType[] = [
   "lights-on",
@@ -51,6 +52,22 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     user = { id: headerUser.id, email: headerUser.email };
+  }
+
+  // Rate limit check (per-user, 10 requests/minute)
+  const rateLimit = checkRateLimit(user.id);
+  if (!rateLimit.allowed) {
+    return new Response(
+      JSON.stringify({ error: "Too many requests. Please slow down." }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": String(rateLimit.retryAfterSeconds),
+          ...Object.fromEntries(responseHeaders.entries()),
+        },
+      },
+    );
   }
 
   // Check usage limits (use admin client to bypass RLS)

@@ -10,6 +10,7 @@ import {
 } from "react-router";
 import type { MetaFunction } from "react-router";
 import { DarkModeProvider, useDarkMode } from "./context/dark-mode";
+import { ClientToaster } from "./components/ClientToaster";
 import "./index.css";
 
 export const meta: MetaFunction = () => [
@@ -92,6 +93,7 @@ export default function App() {
       <NavigationProgressBar />
       <AmberFlashOverlay />
       <Outlet />
+      <ClientToaster />
     </DarkModeProvider>
   );
 }

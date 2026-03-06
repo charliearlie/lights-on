@@ -11,6 +11,7 @@ import {
   type TriggerType,
 } from "../components/image-toggle/ImageToggle";
 import { ErrorBanner } from "../components/ErrorBanner";
+import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -502,12 +503,15 @@ function UploadSection({ projectId }: { projectId: string }) {
     };
   }, [previewUrl]);
 
-  // Reset on success
+  // Reset on success + toast (cleanup effect handles revoking the old URL)
   useEffect(() => {
     if (fetcherData?.imageState) {
       setSelectedFile(null);
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
+      toast.success("Image transformed successfully");
+    }
+    if (fetcherData?.error) {
+      toast.error(fetcherData.error);
     }
   }, [fetcherData]);
 
@@ -943,6 +947,7 @@ function EmbedSection({
     try {
       await navigator.clipboard.writeText(embedCode);
       setCopied(true);
+      toast.success("Embed code copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // Fallback: select text

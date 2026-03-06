@@ -11,7 +11,7 @@ export async function createTestProject(
   name: string,
   isPublic = false
 ) {
-  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
   const { data, error } = await supabaseAdmin
     .from("projects")
     .insert({ user_id: userId, name, slug, is_public: isPublic })

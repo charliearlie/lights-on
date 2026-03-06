@@ -7,10 +7,16 @@ import {
   sendWebhook,
 } from "../helpers/stripe";
 
-const WEBHOOK_USER_EMAIL = "webhook-test@camber-test.local";
+const WEBHOOK_USER_EMAIL = `webhook-test-${Date.now()}@camber-test.local`;
 const WEBHOOK_USER_PASSWORD = "webhook-test-password-2024!";
 
 test.describe("Stripe Webhooks", () => {
+  // Skip entire suite if STRIPE_WEBHOOK_SECRET is not configured
+  test.skip(
+    !process.env.STRIPE_WEBHOOK_SECRET,
+    "STRIPE_WEBHOOK_SECRET not set"
+  );
+
   let testUserId: string;
   let baseURL: string;
 

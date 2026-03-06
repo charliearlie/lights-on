@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import path from "path";
+import { fileURLToPath } from "url";
 import { createTestUser, deleteTestUser } from "../helpers/auth";
 import {
   supabaseAdmin,
@@ -7,6 +8,9 @@ import {
   createTestImageState,
 } from "../helpers/supabase";
 import { TEST_USER_PASSWORD } from "../helpers/test-data";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Unique email to avoid collisions with other test suites
 const EMBED_USER_EMAIL = `embed-iframe-${Date.now()}@camber-test.local`;

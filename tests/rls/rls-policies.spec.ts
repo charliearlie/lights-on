@@ -10,9 +10,10 @@ import {
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY!;
 
-const USER_A_EMAIL = "rls-test-a@camber-test.local";
+const RLS_RUN_ID = Date.now();
+const USER_A_EMAIL = `rls-test-a-${RLS_RUN_ID}@camber-test.local`;
 const USER_A_PASSWORD = "rls-test-password-a-2024!";
-const USER_B_EMAIL = "rls-test-b@camber-test.local";
+const USER_B_EMAIL = `rls-test-b-${RLS_RUN_ID}@camber-test.local`;
 const USER_B_PASSWORD = "rls-test-password-b-2024!";
 
 function createUserClient(accessToken: string) {
