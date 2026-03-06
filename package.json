@@ -9,7 +9,9 @@
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "lint": "eslint .",
-    "optimize-images": "npx tsx scripts/optimize-images.ts"
+    "optimize-images": "npx tsx scripts/optimize-images.ts",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
   },
   "dependencies": {
     "@google/genai": "^1.43.0",
@@ -28,11 +30,13 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@netlify/vite-plugin-react-router": "^3.0.0",
+    "@playwright/test": "^1.58.2",
     "@react-router/dev": "^7.13.1",
     "@react-router/fs-routes": "^7.13.1",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "dotenv": "^17.3.1",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

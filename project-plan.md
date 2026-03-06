@@ -294,13 +294,42 @@ Comprehensive error handling pass across all routes and API endpoints.
 - `app/routes/api.transform.tsx` — RPC error checking
 - `app/routes/api.project-upload.tsx` — RPC error checking
 
+### Phase 4A: Polish — Header Branding, SEO Meta, Navigation Progress — COMPLETE
+
+First batch of Phase 4 polish: fixed header branding bug, added SEO meta tags, and added a navigation progress bar.
+
+**What was done:**
+
+- Fixed header branding across non-showcase routes — added `brand="camber"` to `<Header>` in `app.tsx` (layout + ErrorBoundary), `login.tsx`, and `studio.order.tsx` (success + main). Showcase routes (lamps, fireplaces, outdoor) correctly keep the default "karls" brand.
+- Removed hardcoded `<title>KARLS LJUS — Nordic Home</title>` from `app/root.tsx` — was conflicting with React Router's `<Meta />` component
+- Added root `meta()` export as fallback: "Camber AI — AI-Powered Product Image Transformation" with description, og:title, og:description, og:type, twitter:card
+- Added route-level `meta()` exports to 5 key routes:
+  - `_index.tsx` — "Camber AI — AI-Powered Product Image Transformation"
+  - `showcase.tsx` — "Karls Ljus Showcase — Powered by Camber AI"
+  - `login.tsx` — "Sign In — Camber AI"
+  - `studio.order.tsx` — "Studio Order — Camber AI"
+  - `app.tsx` — "Dashboard — Camber AI" (inherited by child routes)
+- Added `NavigationProgressBar` component in `app/root.tsx` — thin animated bar at top of viewport using `useNavigation()`, appears during client-side route transitions, uses `ikea-blue` in light mode / `amber-glow` in dark mode
+- Added `@keyframes progress-bar` animation in `app/index.css`
+
+**Files modified (7):**
+- `app/root.tsx` — Removed hardcoded title, added meta export, added NavigationProgressBar + useNavigation import
+- `app/routes/app.tsx` — Added `brand="camber"` (2 places), added meta export
+- `app/routes/login.tsx` — Added `brand="camber"`, added meta export
+- `app/routes/studio.order.tsx` — Added `brand="camber"` (3 places), added meta export
+- `app/routes/_index.tsx` — Added meta export
+- `app/routes/showcase.tsx` — Added meta export
+- `app/index.css` — Added progress bar keyframes + utility class
+
+**Verified:** Production build succeeds (175 client modules, 68 server modules).
+
 ---
 
 ## What's Next
 
-### Phase 4: Polish & Launch Prep
+### Phase 4: Polish & Launch Prep (continued)
 
-The core platform (Channel A + B) is functionally complete with error handling in place. Before going live:
+The core platform (Channel A + B) is functionally complete with error handling and initial polish in place. Before going live:
 
 **Must do:**
 - [ ] End-to-end testing of the full SaaS flow: signup → create project → upload image → AI transform → preview toggle → copy embed → embed on external page
@@ -308,13 +337,13 @@ The core platform (Channel A + B) is functionally complete with error handling i
 - [ ] Verify Stripe webhooks work in production (subscription lifecycle, service order payment)
 - [ ] Verify Supabase RLS policies work correctly (users can only see/edit their own data)
 - [ ] Test the embed route renders correctly in an iframe on an external site
-- [ ] Mobile responsiveness pass on all new pages (dashboard, project editor, settings, login)
+- [x] Mobile responsiveness pass on all new pages (dashboard, project editor, settings, login)
 
 **Should do:**
-- [ ] SEO meta tags on landing page and showcase
+- [x] SEO meta tags on landing page and showcase
 - [ ] Loading states and skeleton UIs for dashboard/project pages
 - [ ] Rate limiting on the transform API endpoint
-- [ ] Image size/format validation on upload
+- [x] Image size/format validation on upload
 - [ ] Toast notifications for user actions (project created, settings saved, etc.)
 
 **Deferred (Channel C & D):**
