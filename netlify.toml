@@ -4,8 +4,3 @@
 
 [dev]
   command = "react-router dev"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
