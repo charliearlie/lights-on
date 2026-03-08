@@ -276,8 +276,8 @@ export default function ProjectEditorPage({
       {/* Header section */}
       <ProjectHeader project={project} />
 
-      {/* Upload + Transform section */}
-      <UploadSection projectId={project.id} />
+      {/* Upload + Transform wizard */}
+      <TransformWizard projectId={project.id} />
 
       {/* Image states grid */}
       <ImageStatesGrid
@@ -478,23 +478,56 @@ function ProjectHeader({ project }: { project: Project }) {
 }
 
 // ---------------------------------------------------------------------------
-// UploadSection
+// TransformWizard
 // ---------------------------------------------------------------------------
 
-function UploadSection({ projectId }: { projectId: string }) {
-  const [dragOver, setDragOver] = useState(false);
+type WizardStep = "upload" | "review" | "transforming" | "preview";
+
+const WIZARD_STEPS: { key: WizardStep; label: string }[] = [
+  { key: "upload", label: "Upload" },
+  { key: "review", label: "Prepare" },
+  { key: "transforming", label: "Transform" },
+  { key: "preview", label: "Save" },
+];
+
+function SpinnerIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={`${className} animate-spin`} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+      <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
+    </svg>
+  );
+}
+
+function TransformWizard({ projectId }: { projectId: string }) {
+  // Wizard state
+  const [step, setStep] = useState<WizardStep>("upload");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [transformationType, setTransformationType] = useState(
+  const [transformationType, setTransformationType] = useState<string>(
     TRANSFORMATION_TYPES[0].value,
   );
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const fetcher = useFetcher();
+  const [preparePrompt, setPreparePrompt] = useState("");
+  const [skipPrepare, setSkipPrepare] = useState(false);
+  const [productName, setProductName] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  const isTransforming = fetcher.state !== "idle";
-  const fetcherData = fetcher.data as
-    | { imageState?: unknown; error?: string }
-    | undefined;
+  // AI result data URIs (held in memory until save)
+  const [preparedDataUri, setPreparedDataUri] = useState<string | null>(null);
+  const [preparedMimeType, setPreparedMimeType] = useState<string | null>(null);
+  const [transformedDataUri, setTransformedDataUri] = useState<string | null>(null);
+  const [transformedMimeType, setTransformedMimeType] = useState<string | null>(null);
+
+  // Fetchers
+  const prepareFetcher = useFetcher();
+  const transformFetcher = useFetcher();
+  const saveFetcher = useFetcher();
+
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isPreparing = prepareFetcher.state !== "idle";
+  const isSaving = saveFetcher.state !== "idle";
 
   // Clean up preview URL
   useEffect(() => {
@@ -503,22 +536,61 @@ function UploadSection({ projectId }: { projectId: string }) {
     };
   }, [previewUrl]);
 
-  // Reset on success + toast (cleanup effect handles revoking the old URL)
+  // Handle prepare response
+  const prepareData = prepareFetcher.data as
+    | { preparedImageDataUri?: string; preparedMimeType?: string; error?: string }
+    | undefined;
+
   useEffect(() => {
-    if (fetcherData?.imageState) {
-      setSelectedFile(null);
-      setPreviewUrl(null);
-      toast.success("Image transformed successfully");
+    if (prepareData?.preparedImageDataUri) {
+      setPreparedDataUri(prepareData.preparedImageDataUri);
+      setPreparedMimeType(prepareData.preparedMimeType ?? "image/png");
+      setError(null);
+      setStep("review");
     }
-    if (fetcherData?.error) {
-      toast.error(fetcherData.error);
+    if (prepareData?.error) {
+      setError(prepareData.error);
     }
-  }, [fetcherData]);
+  }, [prepareData]);
+
+  // Handle transform response
+  const transformData = transformFetcher.data as
+    | { imageDataUri?: string; mimeType?: string; error?: string }
+    | undefined;
+
+  useEffect(() => {
+    if (transformData?.imageDataUri) {
+      setTransformedDataUri(transformData.imageDataUri);
+      setTransformedMimeType(transformData.mimeType ?? "image/png");
+      setError(null);
+      setStep("preview");
+    }
+    if (transformData?.error) {
+      setError(transformData.error);
+      setStep(skipPrepare ? "upload" : "review");
+    }
+  }, [transformData, skipPrepare]);
+
+  // Handle save response
+  const saveData = saveFetcher.data as
+    | { imageState?: unknown; error?: string }
+    | undefined;
+
+  useEffect(() => {
+    if (saveData?.imageState) {
+      toast.success("Image pair saved to project");
+      resetWizard();
+    }
+    if (saveData?.error) {
+      toast.error(saveData.error);
+    }
+  }, [saveData]);
 
   const handleFile = useCallback((file: File) => {
     if (!file.type.startsWith("image/")) return;
     setSelectedFile(file);
     setPreviewUrl(URL.createObjectURL(file));
+    setProductName(file.name.replace(/\.[^.]+$/, ""));
   }, []);
 
   const handleDrop = useCallback(
@@ -531,18 +603,139 @@ function UploadSection({ projectId }: { projectId: string }) {
     [handleFile],
   );
 
-  const handleSubmit = useCallback(() => {
+  const resetWizard = useCallback(() => {
+    setStep("upload");
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setPreparePrompt("");
+    setSkipPrepare(false);
+    setProductName("");
+    setError(null);
+    setPreparedDataUri(null);
+    setPreparedMimeType(null);
+    setTransformedDataUri(null);
+    setTransformedMimeType(null);
+  }, []);
+
+  // Convert file to data URI
+  const fileToDataUri = useCallback(async (file: File): Promise<string> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const base64 = btoa(
+      new Uint8Array(arrayBuffer).reduce(
+        (data, byte) => data + String.fromCharCode(byte),
+        "",
+      ),
+    );
+    return `data:${file.type || "image/png"};base64,${base64}`;
+  }, []);
+
+  // Step 1 → Prepare or skip
+  const handlePrepare = useCallback(async () => {
     if (!selectedFile) return;
+    setError(null);
+
+    if (skipPrepare) {
+      const dataUri = await fileToDataUri(selectedFile);
+      setPreparedDataUri(dataUri);
+      setPreparedMimeType(selectedFile.type || "image/png");
+      setStep("transforming");
+      transformFetcher.submit(
+        JSON.stringify({
+          imageDataUri: dataUri,
+          transformationType,
+        }),
+        {
+          method: "post",
+          action: "/api/transform",
+          encType: "application/json",
+        },
+      );
+      return;
+    }
+
     const formData = new FormData();
     formData.set("file", selectedFile);
-    formData.set("projectId", projectId);
-    formData.set("transformationType", transformationType);
-    fetcher.submit(formData, {
+    formData.set("preparePrompt", preparePrompt);
+    prepareFetcher.submit(formData, {
       method: "post",
-      action: "/api/project-upload",
+      action: "/api/prepare-image",
       encType: "multipart/form-data",
     });
-  }, [selectedFile, projectId, transformationType, fetcher]);
+  }, [
+    selectedFile,
+    skipPrepare,
+    preparePrompt,
+    transformationType,
+    prepareFetcher,
+    transformFetcher,
+    fileToDataUri,
+  ]);
+
+  // Step 2 → Transform the prepared image
+  const handleTransform = useCallback(() => {
+    if (!preparedDataUri) return;
+    setError(null);
+    setStep("transforming");
+    transformFetcher.submit(
+      JSON.stringify({
+        imageDataUri: preparedDataUri,
+        transformationType,
+      }),
+      {
+        method: "post",
+        action: "/api/transform",
+        encType: "application/json",
+      },
+    );
+  }, [preparedDataUri, transformationType, transformFetcher]);
+
+  // Step 2 → Regenerate preparation
+  const handleRegenerate = useCallback(() => {
+    if (!selectedFile) return;
+    setError(null);
+    const formData = new FormData();
+    formData.set("file", selectedFile);
+    formData.set("preparePrompt", preparePrompt);
+    prepareFetcher.submit(formData, {
+      method: "post",
+      action: "/api/prepare-image",
+      encType: "multipart/form-data",
+    });
+  }, [selectedFile, preparePrompt, prepareFetcher]);
+
+  // Step 4 → Save the pair
+  const handleSave = useCallback(() => {
+    if (!preparedDataUri || !transformedDataUri) return;
+    const transformLabel =
+      TRANSFORMATION_TYPES.find((t) => t.value === transformationType)?.label ??
+      "On";
+
+    saveFetcher.submit(
+      JSON.stringify({
+        projectId,
+        offImageDataUri: preparedDataUri,
+        offMimeType: preparedMimeType,
+        onImageDataUri: transformedDataUri,
+        onMimeType: transformedMimeType,
+        productName: productName || "Untitled",
+        transformLabel,
+      }),
+      {
+        method: "post",
+        action: "/api/save-image-pair",
+        encType: "application/json",
+      },
+    );
+  }, [
+    projectId,
+    preparedDataUri,
+    preparedMimeType,
+    transformedDataUri,
+    transformedMimeType,
+    transformationType,
+    productName,
+    saveFetcher,
+  ]);
 
   return (
     <section className="mb-12">
@@ -550,19 +743,62 @@ function UploadSection({ projectId }: { projectId: string }) {
         Upload &amp; Transform
       </h2>
       <p className="mb-4 text-sm text-[#78716C] dark:text-[#A8A097]">
-        Upload an image and apply an AI transformation.
+        Upload an image, optionally prepare it with AI, then transform.
       </p>
 
+      {/* Step indicator */}
+      <div className="mb-6 flex items-center gap-1">
+        {WIZARD_STEPS.map((s, i) => {
+          const stepIdx = WIZARD_STEPS.findIndex((ws) => ws.key === step);
+          const isDone = i < stepIdx;
+          const isCurrent = i === stepIdx;
+          return (
+            <div key={s.key} className="flex items-center gap-1">
+              {i > 0 && (
+                <div
+                  className={`h-px w-6 ${
+                    isDone
+                      ? "bg-ikea-blue dark:bg-amber-glow"
+                      : "bg-[#E7E5E4] dark:bg-[#292524]"
+                  }`}
+                />
+              )}
+              <div
+                className={`flex h-6 w-6 items-center justify-center rounded-full text-[0.625rem] font-medium ${
+                  isCurrent
+                    ? "bg-ikea-blue text-white dark:bg-amber-glow dark:text-[#1C1917]"
+                    : isDone
+                      ? "bg-ikea-blue/20 text-ikea-blue dark:bg-amber-glow/20 dark:text-amber-glow"
+                      : "bg-[#E7E5E4] text-[#78716C] dark:bg-[#292524] dark:text-[#A8A097]"
+                }`}
+              >
+                {i + 1}
+              </div>
+              <span
+                className={`text-[0.6875rem] ${
+                  isCurrent
+                    ? "font-medium text-[#1C1917] dark:text-[#F5F0E8]"
+                    : "text-[#78716C] dark:text-[#A8A097]"
+                }`}
+              >
+                {s.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
       {/* Error banner */}
-      {fetcherData?.error && (
+      {error && (
         <div className="mb-4">
-          <ErrorBanner message={fetcherData.error} />
+          <ErrorBanner message={error} />
         </div>
       )}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-        {/* Drop zone */}
-        <div className="flex-1">
+      {/* ------ Step: Upload ------ */}
+      {step === "upload" && (
+        <div className="space-y-4">
+          {/* Drop zone */}
           <div
             onDragOver={(e) => {
               e.preventDefault();
@@ -631,62 +867,255 @@ function UploadSection({ projectId }: { projectId: string }) {
               }}
             />
           </div>
-        </div>
 
-        {/* Controls */}
-        <div className="flex flex-col gap-3">
-          <label className="text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">
-            Transformation
-          </label>
-          <select
-            value={transformationType}
-            onChange={(e) => setTransformationType(e.target.value)}
-            className="rounded-lg border border-border-light bg-white px-3 py-2.5 text-sm text-[#1C1917] outline-none transition-colors focus:border-ikea-blue dark:border-border-dark dark:bg-card-dark dark:text-[#F5F0E8] dark:focus:border-amber-glow"
-          >
-            {TRANSFORMATION_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={!selectedFile || isTransforming}
-            className="rounded-lg bg-ikea-blue px-6 py-2.5 text-[0.8125rem] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50 dark:bg-amber-glow dark:text-[#1C1917]"
-          >
-            {isTransforming ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg
-                  className="h-4 w-4 animate-spin"
-                  viewBox="0 0 24 24"
-                  fill="none"
+          {/* Controls */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <div className="flex-1 space-y-3">
+              {/* Transformation type */}
+              <div>
+                <label className="mb-1.5 block text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">
+                  Transformation
+                </label>
+                <select
+                  value={transformationType}
+                  onChange={(e) => setTransformationType(e.target.value)}
+                  className="w-full rounded-lg border border-border-light bg-white px-3 py-2.5 text-sm text-[#1C1917] outline-none transition-colors focus:border-ikea-blue dark:border-border-dark dark:bg-card-dark dark:text-[#F5F0E8] dark:focus:border-amber-glow"
                 >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    className="opacity-25"
+                  {TRANSFORMATION_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Preparation prompt */}
+              {!skipPrepare && (
+                <div>
+                  <label className="mb-1.5 block text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">
+                    Preparation Instructions
+                    <span className="normal-case tracking-normal"> (optional)</span>
+                  </label>
+                  <textarea
+                    value={preparePrompt}
+                    onChange={(e) => setPreparePrompt(e.target.value)}
+                    placeholder="e.g., Zoom out slightly, center the product on a clean white background..."
+                    rows={2}
+                    className="w-full rounded-lg border border-border-light bg-white px-3 py-2.5 text-sm text-[#1C1917] placeholder-[#78716C]/50 outline-none transition-colors focus:border-ikea-blue dark:border-border-dark dark:bg-card-dark dark:text-[#F5F0E8] dark:placeholder-[#A8A097]/50 dark:focus:border-amber-glow"
                   />
-                  <path
-                    d="M4 12a8 8 0 018-8"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    className="opacity-75"
-                  />
-                </svg>
-                Transforming...
-              </span>
-            ) : (
-              "Transform"
-            )}
-          </button>
+                </div>
+              )}
+
+              {/* Skip preparation checkbox */}
+              <label className="flex items-center gap-2 text-sm text-[#44403C] dark:text-[#C4BAB0]">
+                <input
+                  type="checkbox"
+                  checked={skipPrepare}
+                  onChange={(e) => setSkipPrepare(e.target.checked)}
+                  className="rounded border-border-light accent-ikea-blue dark:border-border-dark dark:accent-amber-glow"
+                />
+                Use my image directly (skip preparation)
+              </label>
+            </div>
+
+            <button
+              type="button"
+              onClick={handlePrepare}
+              disabled={!selectedFile || isPreparing}
+              className="shrink-0 rounded-lg bg-ikea-blue px-6 py-2.5 text-[0.8125rem] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50 dark:bg-amber-glow dark:text-[#1C1917]"
+            >
+              {isPreparing ? (
+                <span className="flex items-center gap-2">
+                  <SpinnerIcon /> Preparing...
+                </span>
+              ) : skipPrepare ? (
+                "Transform"
+              ) : (
+                "Prepare & Preview"
+              )}
+            </button>
+          </div>
+
+          <p className="text-xs text-[#78716C] dark:text-[#A8A097]">
+            Uses 1 transform
+          </p>
         </div>
-      </div>
+      )}
+
+      {/* ------ Step: Review prepared image ------ */}
+      {step === "review" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Raw upload */}
+            <div>
+              <p className="mb-2 text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">
+                Original Upload
+              </p>
+              <div className="aspect-square overflow-hidden rounded-lg border border-border-light bg-[#F5F5F4] dark:border-border-dark dark:bg-[#1C1917]">
+                {previewUrl && (
+                  <img
+                    src={previewUrl}
+                    alt="Original upload"
+                    className="h-full w-full object-contain"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Prepared image */}
+            <div>
+              <p className="mb-2 text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">
+                AI Prepared
+              </p>
+              <div className="aspect-square overflow-hidden rounded-lg border border-border-light bg-[#F5F5F4] dark:border-border-dark dark:bg-[#1C1917]">
+                {isPreparing ? (
+                  <div className="flex h-full items-center justify-center">
+                    <SpinnerIcon className="h-8 w-8 text-[#78716C] dark:text-[#A8A097]" />
+                  </div>
+                ) : preparedDataUri ? (
+                  <img
+                    src={preparedDataUri}
+                    alt="AI prepared"
+                    className="h-full w-full object-contain"
+                  />
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          {/* Prompt for regeneration */}
+          <div>
+            <label className="mb-1.5 block text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">
+              Adjust Instructions
+            </label>
+            <textarea
+              value={preparePrompt}
+              onChange={(e) => setPreparePrompt(e.target.value)}
+              placeholder="Tweak your preparation instructions and regenerate..."
+              rows={2}
+              className="w-full rounded-lg border border-border-light bg-white px-3 py-2.5 text-sm text-[#1C1917] placeholder-[#78716C]/50 outline-none transition-colors focus:border-ikea-blue dark:border-border-dark dark:bg-card-dark dark:text-[#F5F0E8] dark:placeholder-[#A8A097]/50 dark:focus:border-amber-glow"
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleRegenerate}
+              disabled={isPreparing}
+              className="rounded-lg border border-border-light px-4 py-2.5 text-[0.8125rem] font-medium text-[#1C1917] transition-colors hover:bg-[#F5F0E8] disabled:opacity-50 dark:border-border-dark dark:text-[#F5F0E8] dark:hover:bg-[#292524]"
+            >
+              {isPreparing ? (
+                <span className="flex items-center gap-2">
+                  <SpinnerIcon /> Regenerating...
+                </span>
+              ) : (
+                "Regenerate"
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={handleTransform}
+              disabled={!preparedDataUri || isPreparing}
+              className="rounded-lg bg-ikea-blue px-6 py-2.5 text-[0.8125rem] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50 dark:bg-amber-glow dark:text-[#1C1917]"
+            >
+              Accept &amp; Transform
+            </button>
+            <button
+              type="button"
+              onClick={resetWizard}
+              className="text-sm text-[#78716C] transition-colors hover:text-[#1C1917] dark:text-[#A8A097] dark:hover:text-[#F5F0E8]"
+            >
+              Start over
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ------ Step: Transforming ------ */}
+      {step === "transforming" && (
+        <div className="space-y-4">
+          <div className="mx-auto max-w-md">
+            <div className="relative aspect-square overflow-hidden rounded-lg border border-border-light bg-[#F5F5F4] dark:border-border-dark dark:bg-[#1C1917]">
+              {preparedDataUri && (
+                <img
+                  src={preparedDataUri}
+                  alt="Transforming..."
+                  className="h-full w-full object-contain opacity-50"
+                />
+              )}
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                <SpinnerIcon className="h-10 w-10 text-ikea-blue dark:text-amber-glow" />
+                <p className="text-sm font-medium text-[#1C1917] dark:text-[#F5F0E8]">
+                  Transforming...
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------ Step: Preview & Save ------ */}
+      {step === "preview" && (
+        <div className="space-y-4">
+          <div className="mx-auto max-w-md">
+            {preparedDataUri && transformedDataUri && (
+              <ImageToggle
+                states={[
+                  { label: "Off", src: preparedDataUri, alt: `${productName} - Off` },
+                  {
+                    label:
+                      TRANSFORMATION_TYPES.find(
+                        (t) => t.value === transformationType,
+                      )?.label ?? "On",
+                    src: transformedDataUri,
+                    alt: `${productName} - On`,
+                  },
+                ]}
+                transitionType="crossfade"
+                triggerType="switch"
+                className="aspect-square w-full rounded-lg border border-border-light dark:border-border-dark"
+              />
+            )}
+          </div>
+
+          {/* Product name */}
+          <div>
+            <label className="mb-1.5 block text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-[#78716C] dark:text-[#A8A097]">
+              Product Name
+            </label>
+            <input
+              type="text"
+              value={productName}
+              onChange={(e) => setProductName(e.target.value)}
+              className="w-full max-w-xs rounded-lg border border-border-light bg-white px-3 py-2.5 text-sm text-[#1C1917] outline-none transition-colors focus:border-ikea-blue dark:border-border-dark dark:bg-card-dark dark:text-[#F5F0E8] dark:focus:border-amber-glow"
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="rounded-lg bg-ikea-blue px-6 py-2.5 text-[0.8125rem] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50 dark:bg-amber-glow dark:text-[#1C1917]"
+            >
+              {isSaving ? (
+                <span className="flex items-center gap-2">
+                  <SpinnerIcon /> Saving...
+                </span>
+              ) : (
+                "Save to Project"
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={resetWizard}
+              className="text-sm text-[#78716C] transition-colors hover:text-[#1C1917] dark:text-[#A8A097] dark:hover:text-[#F5F0E8]"
+            >
+              Start over
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

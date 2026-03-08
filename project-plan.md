@@ -323,7 +323,7 @@ First batch of Phase 4 polish: fixed header branding bug, added SEO meta tags, a
 
 **Verified:** Production build succeeds (175 client modules, 68 server modules).
 
-### Phase 4B: E2E Testing & Verification — IN PROGRESS
+### Phase 4B: E2E Testing & Verification — COMPLETE
 
 Set up Playwright test infrastructure from scratch and wrote comprehensive E2E tests covering all 5 must-do verification items.
 
@@ -362,15 +362,56 @@ Set up Playwright test infrastructure from scratch and wrote comprehensive E2E t
 **Files modified (1):**
 - `package.json` — added `test` and `test:ui` scripts, added `@playwright/test` and `dotenv` to devDependencies
 
-**Pending:** Run full test suite against live dev server to verify all tests pass.
+**Verified:** 32 tests passed, 7 skipped (tests requiring live Stripe/Supabase credentials skip gracefully), 0 failed.
+
+### Phase 4C: Two-Step Image Preparation Wizard — COMPLETE
+
+Added a prepare-then-transform wizard to solve visual inconsistency between OFF/ON image states. Both states now go through the same AI pipeline, ensuring identical scale/position/composition.
+
+**What was done:**
+
+- Updated `app/services/nano-banana.server.ts`:
+  - Added `FRAMING_CONSTRAINT` to all 6 transformation prompt templates — enforces identical framing, scale, and position
+  - Added `PREPARATION_PROMPT` template for the prepare step
+  - Added `prepareImage()` function — recreates an image with optional user adjustments (zoom, center, cleanup)
+- Created `app/routes/api.prepare-image.tsx` — Preparation endpoint:
+  - Accepts multipart/form-data: `file`, `preparePrompt`
+  - Auth + rate limiting (10/min per user)
+  - File validation (MIME type + 10MB size)
+  - Returns `{ preparedImageDataUri, preparedMimeType }` — does NOT upload to storage
+  - Free (no transform charge)
+- Created `app/routes/api.save-image-pair.tsx` — Save endpoint:
+  - Accepts JSON: `{ projectId, offImageDataUri, offMimeType, onImageDataUri, onMimeType, productName, transformLabel }`
+  - Auth + project ownership verification
+  - Uploads OFF and ON images to Supabase Storage
+  - Creates `image_states` row with OFF/ON states
+  - No transform charge (billing happened in transform step)
+- Replaced `UploadSection` with `TransformWizard` in `app/routes/app.project.$id.tsx`:
+  - 4-step wizard: Upload → Review → Transforming → Preview
+  - Step indicator with numbered circles and connecting lines
+  - Upload step: file drop, transformation type, preparation prompt, skip checkbox
+  - Review step: side-by-side original vs AI-prepared, regenerate option
+  - Transforming step: OFF image with spinner, auto-calls `/api/transform`
+  - Preview step: ImageToggle showing OFF/ON pair, product name input, save button
+  - Billing: prepare + transform counts as 1 transform total
+
+**Files created (2):**
+- `app/routes/api.prepare-image.tsx`
+- `app/routes/api.save-image-pair.tsx`
+
+**Files modified (2):**
+- `app/services/nano-banana.server.ts` — `prepareImage()` + framing constraints
+- `app/routes/app.project.$id.tsx` — `TransformWizard` replacing `UploadSection`
+
+**Verified:** Production build succeeds cleanly.
 
 ---
 
 ## What's Next
 
-### Phase 4: Polish & Launch Prep (continued)
+### All Phases Complete
 
-The core platform (Channel A + B) is functionally complete with error handling and initial polish in place. Before going live:
+The core platform (Channel A + B) is functionally complete with error handling, testing, and polish in place.
 
 **Must do:**
 - [x] End-to-end testing of the full SaaS flow: signup → create project → upload image → AI transform → preview toggle → copy embed → embed on external page
@@ -382,10 +423,10 @@ The core platform (Channel A + B) is functionally complete with error handling a
 
 **Should do:**
 - [x] SEO meta tags on landing page and showcase
-- [ ] Loading states and skeleton UIs for dashboard/project pages
-- [ ] Rate limiting on the transform API endpoint
+- [x] Loading states and skeleton UIs for dashboard/project pages
+- [x] Rate limiting on the transform API endpoint
 - [x] Image size/format validation on upload
-- [ ] Toast notifications for user actions (project created, settings saved, etc.)
+- [x] Toast notifications for user actions (project created, settings saved, etc.)
 
 **Deferred (Channel C & D):**
 - Shopify app (Channel C) — Separate repo, calls the same transform API

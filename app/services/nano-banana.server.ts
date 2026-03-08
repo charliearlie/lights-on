@@ -52,37 +52,54 @@ export interface TransformResult {
 // Prompt templates
 // ---------------------------------------------------------------------------
 
+const FRAMING_CONSTRAINT = `
+CRITICAL: The output MUST have the EXACT same framing, scale, and position as the input image. Do NOT zoom in, zoom out, crop, or recompose. The subject must occupy the same area of the frame. Only change what is explicitly described below.`;
+
 const PROMPT_TEMPLATES: Record<TransformationType, string> = {
   "lights-on": `This is a product photo with the light/fire turned OFF. Generate a new image of this EXACT SAME product, but now turned ON.
-Keep the design, angle, position, and composition identical.
+Keep the design, angle, position, and composition identical.${FRAMING_CONSTRAINT}
 Changes: The product should now emit a warm golden glow. The background should change to dark/black. The surrounding area should be illuminated by warm light. Cozy, inviting atmosphere.
 Style: IKEA catalog photography, minimal, modern, square format. No text or labels.`,
 
   "lights-off": `This is a product photo with the light/fire turned ON with warm glow. Generate a new image of this EXACT SAME product, but now turned OFF.
-Keep the design, angle, position, and composition identical.
+Keep the design, angle, position, and composition identical.${FRAMING_CONSTRAINT}
 Changes: The product should appear as an inert decorative object. The background should change to clean white. Lit by soft ambient daylight.
 Style: IKEA catalog photography, minimal, modern, square format. No text or labels.`,
 
   "day-to-night": `This is a daytime photo of a scene. Generate a new image of this EXACT SAME scene, but at night.
-Keep the composition, objects, and layout identical.
+Keep the composition, objects, and layout identical.${FRAMING_CONSTRAINT}
 Changes: Dark sky, nighttime lighting, any lights/lamps in the scene should glow warmly, ambient mood lighting.
 Style: Architectural photography, clean, realistic lighting. No text or labels.`,
 
   "night-to-day": `This is a nighttime photo of a scene. Generate a new image of this EXACT SAME scene, but in daylight.
-Keep the composition, objects, and layout identical.
+Keep the composition, objects, and layout identical.${FRAMING_CONSTRAINT}
 Changes: Bright natural daylight, clear sky, shadows appropriate for daytime. Any lamps should appear off.
 Style: Architectural photography, clean, realistic lighting. No text or labels.`,
 
   "empty-to-staged": `This is a photo of an empty room or space. Generate a new image of this EXACT SAME space, but now staged with tasteful Scandinavian furniture and decor.
-Keep the room dimensions, windows, and architectural features identical.
+Keep the room dimensions, windows, and architectural features identical.${FRAMING_CONSTRAINT}
 Changes: Add modern Nordic furniture, warm textiles, plants, and decorative objects. Make it feel lived-in and inviting.
 Style: Interior design photography, Scandinavian minimalism, warm and cozy. No text or labels.`,
 
   "plain-to-lifestyle": `This is a plain product photo on a white/neutral background. Generate a new image of this EXACT SAME product, but now shown in a styled lifestyle setting.
-Keep the product design identical.
+Keep the product design identical.${FRAMING_CONSTRAINT}
 Changes: Place the product in a beautiful Scandinavian home interior. Show it in context — on a table, shelf, or appropriate surface. Warm, inviting atmosphere.
 Style: Lifestyle product photography, Scandinavian interiors, editorial quality. No text or labels.`,
 };
+
+// ---------------------------------------------------------------------------
+// Preparation prompt
+// ---------------------------------------------------------------------------
+
+const PREPARATION_PROMPT = `You are recreating this exact product/scene image with adjustments.
+
+CRITICAL: Keep the EXACT same product/subject, viewing angle, and overall composition.
+Output a clean, professionally composed version.
+
+User adjustments: {userPrompt}
+
+If no adjustments are specified, reproduce the image as faithfully as possible with clean, even lighting.
+Style: Product photography, minimal, modern, square format. No text or labels.`;
 
 // ---------------------------------------------------------------------------
 // In-memory cache (upgrade to Supabase Storage later)
@@ -209,6 +226,51 @@ export async function transformImage(
   // Cache the result
   cache.set(key, result);
   return result;
+}
+
+/**
+ * Prepare an image using AI — recreates the image with optional adjustments.
+ * Used as the first step in a two-step flow to ensure visual consistency
+ * between OFF and ON states.
+ */
+export async function prepareImage(
+  sourceImageDataUri: string,
+  userPrompt?: string,
+  options: TransformOptions = {},
+): Promise<TransformResult> {
+  const model = options.model ?? "gemini-3.1-flash-image-preview";
+  const prompt = PREPARATION_PROMPT.replace(
+    "{userPrompt}",
+    userPrompt?.trim() || "No specific adjustments. Reproduce faithfully.",
+  );
+
+  const match = sourceImageDataUri.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) throw new Error("Invalid source image data URI");
+  const [, mimeType, data] = match;
+
+  return withRetry(async () => {
+    const response = await ai().models.generateContent({
+      model,
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: prompt },
+            { inlineData: { mimeType: mimeType!, data: data! } },
+          ],
+        },
+      ],
+      config: {
+        responseModalities: ["IMAGE", "TEXT"],
+      },
+    });
+
+    const extracted = extractImageDataUri(response);
+    if (!extracted) {
+      throw new Error("Nano Banana: No image returned for preparation");
+    }
+    return extracted;
+  });
 }
 
 /**
