@@ -53,6 +53,7 @@ export interface PromptData {
   ratio: string;
   primaryColor: string;
   accentColor: string;
+  hasRefImage: boolean;
 }
 
 export interface StyleDefinition {

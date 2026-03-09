@@ -58,6 +58,7 @@ export async function generatePoster(
     ratio: req.ratio || "3:4",
     primaryColor: req.primaryColor,
     accentColor: req.accentColor,
+    hasRefImage: !!req.refImageBase64,
   };
 
   const prompt = styleBuilder.buildPrompt(promptData);
@@ -120,6 +121,63 @@ export async function generateMockup(
 
   const storageUrl = await uploadToStorage(
     `mockups/${slug(req.stadiumName)}-${req.mockupType}-${Date.now()}.png`,
+    imgData,
+  );
+
+  return { imageDataUri, storageUrl };
+}
+
+// ---------------------------------------------------------------------------
+// Upscale — send existing image back to Gemini at higher resolution
+// ---------------------------------------------------------------------------
+
+export interface UpscaleRequest {
+  imageBase64: string;
+  stadiumName: string;
+  ratio: string;
+  targetResolution: string;
+  model: string;
+}
+
+export async function upscaleImage(
+  req: UpscaleRequest,
+): Promise<GenerateResult> {
+  const prompt = `You are an image upscaler. Your ONLY job is to output this EXACT same image at higher resolution.
+
+ABSOLUTE RULES — VIOLATING ANY OF THESE IS A FAILURE:
+- The output must be IDENTICAL to the input in every way: same composition, same layout, same colours, same shapes, same text, same positions.
+- Do NOT add anything: no streets, no surrounding area, no extra detail, no context, no background elements that aren't in the original.
+- Do NOT remove anything.
+- Do NOT reinterpret, reimagine, or "improve" the artwork in any way.
+- Do NOT change the perspective, angle, or framing.
+- Do NOT move, resize, or reposition any element.
+- The stadium shape, stands, pitch, and all geometric elements must be EXACTLY as they appear in the input — same proportions, same angles, same asymmetries.
+- All text must remain in the exact same position with the exact same content and styling.
+- The background colour and all fill colours must remain identical.
+
+Think of this as a mechanical resolution increase — like nearest-neighbour upscaling but with anti-aliasing. The output should be indistinguishable from the input except for being sharper and higher resolution.`;
+
+  const parts: Array<Record<string, unknown>> = [
+    { text: prompt },
+    {
+      inlineData: {
+        mimeType: "image/png",
+        data: req.imageBase64,
+      },
+    },
+  ];
+
+  const imgData = await callGemini(
+    req.model,
+    parts,
+    req.ratio,
+    req.targetResolution,
+  );
+
+  const imageDataUri = `data:image/png;base64,${imgData}`;
+
+  const storageUrl = await uploadToStorage(
+    `posters/${slug(req.stadiumName)}-upscaled-${req.targetResolution}-${Date.now()}.png`,
     imgData,
   );
 

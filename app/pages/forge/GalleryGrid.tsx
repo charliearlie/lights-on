@@ -11,6 +11,7 @@ interface GalleryGridProps {
   onDownloadAll: () => void;
   onRegen: (id: string) => void;
   onRemove: (id: string) => void;
+  onUpscaled: (id: string, imageDataUri: string, resolution: string) => void;
   onMockupGenerated: (id: string, mockupType: string, imageUrl: string) => void;
 }
 
@@ -29,6 +30,7 @@ export function GalleryGrid({
   onDownloadAll,
   onRegen,
   onRemove,
+  onUpscaled,
   onMockupGenerated,
 }: GalleryGridProps) {
   const queuedCount = queue.filter((i) => i.status === "queued").length;
@@ -74,6 +76,7 @@ export function GalleryGrid({
                 onDownload={onDownload}
                 onRegen={onRegen}
                 onRemove={onRemove}
+                onUpscaled={onUpscaled}
                 onMockupGenerated={onMockupGenerated}
               />
             ))}

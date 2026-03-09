@@ -8,6 +8,7 @@ interface StadiumCardProps {
   onDownload: (item: QueueItem) => void;
   onRegen: (id: string) => void;
   onRemove: (id: string) => void;
+  onUpscaled: (id: string, imageDataUri: string, resolution: string) => void;
   onMockupGenerated: (
     id: string,
     mockupType: string,
@@ -36,9 +37,11 @@ export function StadiumCard({
   onDownload,
   onRegen,
   onRemove,
+  onUpscaled,
   onMockupGenerated,
 }: StadiumCardProps) {
   const [loadingMockup, setLoadingMockup] = useState<string | null>(null);
+  const [upscaling, setUpscaling] = useState(false);
 
   const [rw, rh] = (item.ratio || "3:4").split(":").map(Number);
   const badge = STATUS_BADGE[item.status] || STATUS_BADGE.queued;
@@ -73,6 +76,40 @@ export function StadiumCard({
       console.error("[StadiumForge] Mockup error:", e);
     } finally {
       setLoadingMockup(null);
+    }
+  };
+
+  const handleUpscale = async (targetRes: string) => {
+    if (!item.result || upscaling) return;
+    setUpscaling(true);
+
+    try {
+      const imageBase64 = item.result.split(",")[1];
+      const res = await fetch("/api/forge/upscale", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageBase64,
+          stadiumName: item.stadiumName,
+          ratio: item.ratio,
+          targetResolution: targetRes,
+          model,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(
+          (data as { error?: string }).error || `Error ${res.status}`,
+        );
+      }
+
+      const data = (await res.json()) as { imageDataUri: string };
+      onUpscaled(item.id, data.imageDataUri, targetRes);
+    } catch (e) {
+      console.error("[StadiumForge] Upscale error:", e);
+    } finally {
+      setUpscaling(false);
     }
   };
 
@@ -178,6 +215,21 @@ export function StadiumCard({
               className="border-none rounded w-6 h-6 text-[13px] cursor-pointer flex items-center justify-center transition-all bg-[#1e2e10] text-[#a3e635] hover:bg-[#a3e635] hover:text-black"
             >
               ↓
+            </button>
+          )}
+          {item.status === "done" && item.resolution !== "4K" && (
+            <button
+              onClick={() => handleUpscale("4K")}
+              disabled={upscaling}
+              title="Upscale to 4K"
+              style={{ fontFamily: font.mono }}
+              className={`border-none rounded h-6 px-1.5 text-[9px] cursor-pointer flex items-center justify-center transition-all tracking-[0.5px] ${
+                upscaling
+                  ? "bg-[#0a1a2a] text-[#7dd3fc] opacity-60 pointer-events-none"
+                  : "bg-[#1a1a2e] text-[#8888cc] hover:bg-[#2a2a4a] hover:text-[#aaaaee]"
+              }`}
+            >
+              {upscaling ? "⏳" : "4K↑"}
             </button>
           )}
           {(item.status === "done" || item.status === "error") && (

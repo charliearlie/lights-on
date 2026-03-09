@@ -65,6 +65,19 @@ export function ForgePage() {
       });
   }, [queue]);
 
+  const handleUpscaled = useCallback(
+    (id: string, imageDataUri: string, newResolution: string) => {
+      setQueue((prev) =>
+        prev.map((i) =>
+          i.id === id
+            ? { ...i, result: imageDataUri, resolution: newResolution }
+            : i,
+        ),
+      );
+    },
+    [],
+  );
+
   const handleMockupGenerated = useCallback(
     (id: string, mockupType: string, imageUrl: string) => {
       setQueue((prev) =>
@@ -193,6 +206,7 @@ export function ForgePage() {
           onDownloadAll={handleDownloadAll}
           onRegen={handleRegen}
           onRemove={handleRemove}
+          onUpscaled={handleUpscaled}
           onMockupGenerated={handleMockupGenerated}
         />
       </div>

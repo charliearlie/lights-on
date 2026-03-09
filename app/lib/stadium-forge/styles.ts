@@ -10,7 +10,7 @@ export const STYLES: Record<StyleKey, StyleDefinition> = {
     label: "Bauhaus",
     buildPrompt: (d: PromptData) =>
       `Create a premium minimalist poster art print featuring a bird's eye view of ${d.stadiumName}.
-${buildSharedRules(d.ratio)}
+${buildSharedRules(d.ratio, d.hasRefImage)}
 ${TYPOGRAPHY_RULES}
 TEXT CONTENT TO RENDER:
 - Title: "${d.stadiumName.toUpperCase()}"
@@ -24,7 +24,7 @@ STYLE: Bauhaus poster art. Flat geometric shapes, hard edges, zero gradients. Pr
     label: "Blueprint",
     buildPrompt: (d: PromptData) =>
       `Create a premium minimalist poster art print featuring a bird's eye view of ${d.stadiumName}.
-${buildSharedRules(d.ratio)}
+${buildSharedRules(d.ratio, d.hasRefImage)}
 ${TYPOGRAPHY_RULES}
 TEXT CONTENT TO RENDER:
 - Title: "${d.stadiumName.toUpperCase()}"
@@ -38,7 +38,7 @@ STYLE: Architectural blueprint. Deep navy background (#0a1628). All stadium geom
     label: "Risograph",
     buildPrompt: (d: PromptData) =>
       `Create a premium minimalist poster art print featuring a bird's eye view of ${d.stadiumName}.
-${buildSharedRules(d.ratio)}
+${buildSharedRules(d.ratio, d.hasRefImage)}
 ${TYPOGRAPHY_RULES}
 TEXT CONTENT TO RENDER:
 - Title: "${d.stadiumName.toUpperCase()}"
@@ -52,7 +52,7 @@ STYLE: Risograph print aesthetic. Two-colour only: ${d.primaryColor} and ${d.acc
     label: "Midnight",
     buildPrompt: (d: PromptData) =>
       `Create a premium minimalist poster art print featuring a bird's eye view of ${d.stadiumName}.
-${buildSharedRules(d.ratio)}
+${buildSharedRules(d.ratio, d.hasRefImage)}
 ${TYPOGRAPHY_RULES}
 TEXT CONTENT TO RENDER:
 - Title: "${d.stadiumName.toUpperCase()}"

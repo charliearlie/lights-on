@@ -21,7 +21,7 @@ export function fmtSubtitle(clubName: string, city: string): string {
   return `${c} — ${t}`;
 }
 
-export function buildSharedRules(ratio: string): string {
+export function buildSharedRules(ratio: string, hasRefImage = false): string {
   const orientations: Record<string, string> = {
     "3:4": "Portrait orientation (3:4 aspect ratio)",
     "2:3": "Tall portrait orientation (2:3 aspect ratio)",
@@ -30,21 +30,33 @@ export function buildSharedRules(ratio: string): string {
     "9:16": "Tall narrow portrait (9:16 aspect ratio)",
   };
   const orient = orientations[ratio] || `${ratio} aspect ratio`;
-  return `A satellite reference image of the actual stadium footprint is attached. This image is your PRIMARY source of truth for all geometry. Study it carefully before generating.
+
+  const refImageBlock = hasRefImage
+    ? `A satellite reference image of the actual stadium footprint is attached. This image is your PRIMARY source of truth for all geometry. Study it carefully before generating.`
+    : `No satellite reference image is provided. Use your knowledge of this stadium's real-world architecture and layout to accurately represent its unique shape and asymmetries.`;
+
+  return `${refImageBlock}
 
 IMAGE FORMAT: ${orient}. This is a print-ready poster.
 
 GEOMETRY FIDELITY (critical — fans will reject inaccurate shapes):
-- Trace the EXACT outline and proportions from the satellite image. Do NOT idealise, symmetrise, or generalise.
-- Each of the four stands (North, South, East, West) may have DIFFERENT depths, heights, and shapes. Reproduce these differences faithfully. If one stand is visibly shallower or narrower than the others in the satellite image, it MUST appear that way in your output.
+- ${hasRefImage ? "Trace the EXACT outline and proportions from the satellite image." : "Reproduce the stadium's real-world outline and proportions as accurately as possible."} Do NOT idealise, symmetrise, or generalise.
+- Each of the four stands (North, South, East, West) may have DIFFERENT depths, heights, and shapes. Reproduce these differences faithfully. If one stand is visibly shallower or narrower than the others, it MUST appear that way in your output.
 - Preserve asymmetry. Many stadiums have one stand that is distinctly different (e.g. smaller, older, single-tier vs multi-tier). This asymmetry is what makes each stadium recognisable and unique. Do NOT make all four sides equal.
-- Corner treatments matter: some stadiums have open corners, some have filled corners, some have rounded corners. Match the satellite image exactly.
-- Roof structures and stand segmentation visible in the satellite view should inform the block shapes you draw. If you can see seating tier divisions, reflect them as geometric subdivisions.
+- Corner treatments matter: some stadiums have open corners, some have filled corners, some have rounded corners. Match the real stadium exactly.
+- Roof structures and stand segmentation should inform the block shapes you draw. If there are visible seating tier divisions, reflect them as geometric subdivisions.
 - The overall silhouette when viewed top-down must be instantly recognisable as THIS specific stadium, not a generic football ground.
 
+COMPOSITION (critical — this is a clean poster, NOT a map):
+- The stadium artwork must be CENTRED horizontally in the image.
+- Show ONLY the stadium itself. Do NOT include surrounding streets, roads, car parks, buildings, trees, or any context outside the stadium boundary.
+- The background around the stadium must be a clean, solid colour — no terrain, no urban context, no landscape.
+- The stadium should fill the centre zone generously without being cramped or off-centre.
+
 ADDITIONAL RULES:
-- Strict overhead top-down perspective. Zero perspective tilt.
-- Playing pitch: centred, correct proportions relative to the stands, clean white markings.
+- Strict overhead top-down perspective. Zero perspective tilt. No 3D or isometric view.
+- Playing pitch: centred within the stadium, correct proportions relative to the stands, clean white markings.
+- All stand geometry must have clean, straight edges. No wobbly, diagonal, or distorted lines.
 - Absolutely no club crests, badges, logos, sponsor text, or player figures.
 - Print-ready. No watermarks. No borders. No outer frame.`;
 }
