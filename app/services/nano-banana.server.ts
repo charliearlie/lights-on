@@ -8,7 +8,7 @@ import { createHash } from "node:crypto";
 
 let _ai: GoogleGenAI | null = null;
 
-function ai(): GoogleGenAI {
+export function ai(): GoogleGenAI {
   if (!_ai) {
     const key = process.env.NANO_BANANA_API_KEY;
     if (!key) throw new Error("NANO_BANANA_API_KEY is not set");
@@ -119,7 +119,7 @@ function cacheKey(sourceDataUri: string, type: TransformationType): string {
 // Core: extractImageDataUri
 // ---------------------------------------------------------------------------
 
-function extractImageDataUri(
+export function extractImageDataUri(
   response: Awaited<ReturnType<GoogleGenAI["models"]["generateContent"]>>,
 ): TransformResult | null {
   const candidate = response.candidates?.[0];
@@ -144,7 +144,7 @@ function extractImageDataUri(
 // Retry helper
 // ---------------------------------------------------------------------------
 
-async function withRetry<T>(
+export async function withRetry<T>(
   fn: () => Promise<T>,
   maxAttempts = 3,
   baseDelayMs = 1000,

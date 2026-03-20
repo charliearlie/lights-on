@@ -39,18 +39,19 @@ function ensureCleanup() {
  * Check if a request should be rate-limited.
  * Returns `{ allowed: true }` or `{ allowed: false, retryAfterSeconds }`.
  */
-export function checkRateLimit(userId: string): {
+export function checkRateLimit(userId: string, prefix?: string): {
   allowed: boolean;
   retryAfterSeconds?: number;
 } {
   ensureCleanup();
 
+  const storeKey = prefix ? `${prefix}${userId}` : userId;
   const now = Date.now();
-  let entry = store.get(userId);
+  let entry = store.get(storeKey);
 
   if (!entry) {
     entry = { timestamps: [] };
-    store.set(userId, entry);
+    store.set(storeKey, entry);
   }
 
   // Remove timestamps outside the window
